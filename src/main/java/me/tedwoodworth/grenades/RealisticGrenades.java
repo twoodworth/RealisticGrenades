@@ -1,5 +1,6 @@
 package me.tedwoodworth.grenades;
 
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class RealisticGrenades extends JavaPlugin {
@@ -7,7 +8,8 @@ public class RealisticGrenades extends JavaPlugin {
 
     @Override
     public void onEnable() {
-      instance = this;
+        instance = this;
+        Bukkit.getPluginManager().registerEvents(new EventListener(), this);
     }
 
     @Override
@@ -17,7 +19,6 @@ public class RealisticGrenades extends JavaPlugin {
     public static RealisticGrenades getInstance() {
         return instance;
     }
-
 
 
 }
