@@ -12,15 +12,34 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
 
 public class EventListener implements Listener {
     private final Set<Player> grenadeDropList = new HashSet<>();
-    public final Map<Item, Entity> grenadeThrowerMap = new HashMap<>();
+    public final Set<Item> grenadeSet = new HashSet<>();
     private final ItemManager manager = ItemManager.getInstance();
     private final RealisticGrenades plugin = RealisticGrenades.getInstance();
     private final ItemStack air = new ItemStack(Material.AIR);
+
+    public Player getGrenadeThrower(Item item) {
+        var stack = item.getItemStack();
+        var meta = stack.getItemMeta();
+        var container = meta.getPersistentDataContainer();
+        var strUUID = container.get(Constants.THROWER_KEY, PersistentDataType.STRING);
+        var uuid = UUID.fromString(strUUID);
+        return Bukkit.getPlayer(uuid);
+    }
+
+    public void setGrenadeThrower(Item item, Player player) {
+        var stack = item.getItemStack();
+        var meta = stack.getItemMeta();
+        var container = meta.getPersistentDataContainer();
+        container.set(Constants.THROWER_KEY, PersistentDataType.STRING, player.getUniqueId().toString());
+        stack.setItemMeta(meta);
+        item.setItemStack(stack);
+    }
 
     private Location getNextLocation(Item item) {
         var location = item.getLocation();
@@ -28,7 +47,7 @@ public class EventListener implements Listener {
         return new Location(location.getWorld(), location.getX() + velocity.getX(), location.getY() + velocity.getY(), location.getZ() + velocity.getZ());
     }
 
-    private boolean entityCollision(Item item, Location location, Location nextLocation, Player player, long curTime) {
+    private boolean entityCollision(Item item, Location location, Location nextLocation, Player player, long remainingTime, long initialTime) {
         var xDist = Math.abs(location.getX() - nextLocation.getX());
         var yDist = Math.abs(location.getY() - nextLocation.getY());
         var zDist = Math.abs(location.getZ() - nextLocation.getZ());
@@ -48,7 +67,7 @@ public class EventListener implements Listener {
                 y += vY / 10.0;
                 z += vZ / 10.0;
                 for (var entity : nearby) {
-                    if (curTime < 10L && entity.equals(player)) continue;
+                    if (initialTime - remainingTime < 10L && entity.equals(player)) continue;
                     var box = entity.getBoundingBox();
                     if (box.contains(x, y, z)) {
                         var bX = Math.min(
@@ -126,8 +145,14 @@ public class EventListener implements Listener {
         return false;
     }
 
-    private void grenadeTick(Item item, long curTime, long explodeTime, Player player) {
-        if (curTime == explodeTime) {
+    public void grenadeTick(Item item) {
+        var stack = item.getItemStack();
+        var meta = stack.getItemMeta();
+        var container = meta.getPersistentDataContainer();
+        var remainingTime = container.get(Constants.REMAINING_KEY, PersistentDataType.LONG);
+        var initialTime = container.get(Constants.INITIAL_KEY, PersistentDataType.LONG);
+        var player = getGrenadeThrower(item);
+        if (remainingTime == 0) {
             var primeEvent = new ExplosionPrimeEvent(item, 3.85F, false);
             Bukkit.getPluginManager().callEvent(primeEvent);
             if (!primeEvent.isCancelled()) {
@@ -138,7 +163,7 @@ public class EventListener implements Listener {
                     block.breakNaturally();
                 }
             }
-            grenadeThrowerMap.remove(item);
+            grenadeSet.remove(item);
             item.remove();
             return;
         }
@@ -146,7 +171,7 @@ public class EventListener implements Listener {
         var location2 = location.clone();
         var velocity = item.getVelocity();
         location2.setY(item.getLocation().getY() + 0.25);
-        if (curTime % 2 == 0 && curTime > 2) {
+        if (remainingTime % 2 == 0 && initialTime - remainingTime > 2) {
             item.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, location2, 1, 0.05, 0.05, 0.05, 0);
         }
         var nextLocation = getNextLocation(item);
@@ -156,7 +181,7 @@ public class EventListener implements Listener {
             velocity.setY(velocity.getY() * 0.5);
         }
 
-        if (!entityCollision(item, location, nextLocation, player, curTime)) {
+        if (!entityCollision(item, location, nextLocation, player, remainingTime, initialTime)) {
             var vLength = velocity.length();
 
             // X-axis check
@@ -252,13 +277,17 @@ public class EventListener implements Listener {
                 item.setVelocity(velocity);
             }
         }
-        Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeTick(item, curTime + 1L, explodeTime, player), 1L);
+
+        container.set(Constants.REMAINING_KEY, PersistentDataType.LONG, remainingTime - 1);
+        stack.setItemMeta(meta);
+        item.setItemStack(stack);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeTick(item), 1L);
     }
 
-    private void throwGrenade(Player player, boolean isOverhand, long explodeTime) {
-        if (player.isSneaking() && explodeTime != 0) { // if sneaking, don't throw yet
+    private void throwGrenade(Player player, boolean isOverhand, long remainingTime) {
+        if (player.isSneaking() && remainingTime != 0) { // if sneaking, don't throw yet
             Bukkit.getScheduler().runTaskLater(plugin,
-                    () -> throwGrenade(player, isOverhand, explodeTime - 1), 1L);
+                    () -> throwGrenade(player, isOverhand, remainingTime - 1), 1L);
             return;
         }
 
@@ -287,10 +316,18 @@ public class EventListener implements Listener {
         velocity.setZ(velocity.getZ() + (Math.random() - 0.5) * 0.025);
 
         var drop = player.getWorld().dropItem(loc, grenade);
-        grenadeThrowerMap.put(drop, player);
+        var stack = drop.getItemStack();
+        var meta = stack.getItemMeta();
+        var container = meta.getPersistentDataContainer();
+        container.set(Constants.REMAINING_KEY, PersistentDataType.LONG, remainingTime);
+        container.set(Constants.INITIAL_KEY, PersistentDataType.LONG, remainingTime);
+        stack.setItemMeta(meta);
+        drop.setItemStack(stack);
+        setGrenadeThrower(drop, player);
+        grenadeSet.add(drop);
         drop.setVelocity(velocity);
         drop.setPickupDelay(1000);
-        grenadeTick(drop, 0, explodeTime, player);
+        grenadeTick(drop);
     }
 
     private void cancelPrime(Player player) {

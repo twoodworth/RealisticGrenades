@@ -18,8 +18,8 @@ dependencies {
 }
 
 compileJava   {
-    sourceCompatibility = '16'
-    targetCompatibility = '16'
+    sourceCompatibility = '14'
+    targetCompatibility = '14'
 }
 
 jar {
@@ -30,11 +30,4 @@ jar {
 shadowJar {
     archivesBaseName = "RealisticGrenades"
     archiveClassifier.set('')
-
-    dependencies {
-        include dependency('de.themoep:inventorygui')
-    }
-
-    def libPackage = "me.tedwoodworth.diplomacy.lib"
-    relocate("de.themoep.inventorygui", "${libPackage}.de.themoep.inventorygui")
 }

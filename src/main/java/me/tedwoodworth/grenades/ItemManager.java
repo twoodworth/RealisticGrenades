@@ -1,6 +1,7 @@
 package me.tedwoodworth.grenades;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -36,7 +37,10 @@ public class ItemManager {
 
         var meta = head.getItemMeta();
         if (text.length > 0 && meta != null) { // add name/lore
-            meta.setDisplayName(text[0]);
+            for (int i = 0; i < text.length; i++) {
+                text[i] = "" + ChatColor.RESET + text[i];
+            }
+            meta.setDisplayName("" + ChatColor.RESET + text[0]);
             meta.setLore(new ArrayList<>(Arrays.asList(text).subList(1, text.length)));
             head.setItemMeta(meta);
 

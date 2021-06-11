@@ -1,5 +1,5 @@
 name: RealisticGrenades
-main: me.tedwoodworth.grenades
+main: me.tedwoodworth.grenades.RealisticGrenades
 version: 0.1.0
 description: This plugin adds realistic grenades into the game.
 author: Tedsworth
