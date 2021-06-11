@@ -42,6 +42,7 @@ public class ItemManager {
 
             var container = meta.getPersistentDataContainer();
             container.set(Constants.TYPE_KEY, PersistentDataType.SHORT, (short) type.ordinal());
+            head.setItemMeta(meta);
         }
 
 
@@ -69,6 +70,24 @@ public class ItemManager {
         if (meta == null) return false;
         var container = meta.getPersistentDataContainer();
         return container.has(Constants.TYPE_KEY, PersistentDataType.SHORT);
+    }
+
+    public boolean isPrimed(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return false;
+        var container = meta.getPersistentDataContainer();
+        return container.has(Constants.PRIMED_KEY, BooleanPersistentDataType.instance) && container.get(Constants.PRIMED_KEY, BooleanPersistentDataType.instance);
+    }
+
+    public void primeGrenade(ItemStack grenade) {
+        if (!isGrenade(grenade)) {
+            throw new IllegalArgumentException("Error: argument is not a grenade.");
+        }
+
+        var meta = grenade.getItemMeta();
+        var container = meta.getPersistentDataContainer();
+        container.set(Constants.PRIMED_KEY, BooleanPersistentDataType.instance, true);
+        grenade.setItemMeta(meta);
     }
 
     public Grenade getType(ItemStack item) {
