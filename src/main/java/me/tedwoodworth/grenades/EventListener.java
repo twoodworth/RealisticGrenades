@@ -18,6 +18,8 @@ import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
@@ -206,6 +208,79 @@ public class EventListener implements Listener {
         return false;
     }
 
+    private boolean createSmokeExplosion(Location location, float radius, Entity source) {
+        var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
+        Bukkit.getPluginManager().callEvent(event);
+        if (!event.isCancelled()) {
+            var fraction = radius / 20.0F;
+            Bukkit.getScheduler().runTask(plugin, () -> createSmoke(source, fraction, 0, 6));
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 2, 0, 6), 5L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 3, 0, 6), 10L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 4, 0, 6), 15L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 5, 0, 6), 20L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 6, 0, 6), 25L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 7, 0, 6), 30L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 8, 0, 6), 35L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 9, 0, 6), 40L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 10, 0, 6), 45L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 11, 0, 6), 50L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 12, 0, 6), 55L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 13, 0, 6), 60L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 14, 0, 6), 65L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 15, 0, 6), 70L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 16, 0, 6), 75L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 17, 0, 6), 80L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 18, 0, 6), 85L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, fraction * 19, 0, 6), 90L);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, radius, 0, 420), 95L);
+
+            return true;
+        }
+        return false;
+    }
+
+    private void createSmoke(Entity source, float radius, int i, final int max) {
+        var count = ConfigManager.SMOKE_THICKNESS * 0.1 * Math.pow(radius * 2, 3);
+
+        var loc = source.getLocation();
+        var x = loc.getX();
+        var y = loc.getY();
+        var z = loc.getZ();
+
+        loc.getWorld().playSound(loc, Sound.BLOCK_LAVA_EXTINGUISH, 0.02F, 1.3F);
+
+        var nearby = source.getNearbyEntities(radius, radius, radius);
+        for (var entity : nearby) {
+            if (entity instanceof Player && loc.distanceSquared(entity.getLocation()) < Math.pow(radius, 2)) {
+                ((Player) entity).addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 30, 0, true, false, false));
+            }
+        }
+
+        for (int j = 0; j < count; j++) {
+            var tempX = x + Math.random() * 2 * radius - radius;
+            var tempY = y + Math.random() * 2 * radius - radius;
+            var tempZ = z + Math.random() * 2 * radius - radius;
+            var dustOptions = new Particle.DustOptions(Color.fromRGB(100, 100, 100), (float) (7 + Math.random() * 12.0));
+            var tempLoc = new Location(loc.getWorld(), tempX, tempY, tempZ);
+            if (tempLoc.distanceSquared(loc) > Math.pow(radius, 2)) continue;
+            int k = 0;
+            var block = tempLoc.getBlock();
+            while (k < radius && !block.getType().isAir()) {
+                block = block.getRelative(BlockFace.UP);
+                k++;
+            }
+            if (!block.getType().isAir()) continue;
+
+
+            tempLoc.getWorld().spawnParticle(Particle.REDSTONE, tempLoc, 1, dustOptions);
+        }
+        i++;
+        if (i != max) {
+            int finalI = i;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> createSmoke(source, radius, finalI, max), 1L);
+        }
+    }
+
     private void explodeGrenade(Item item) {
         var stack = item.getItemStack();
         var blastRadius = manager.getBlastRadius(stack);
@@ -223,10 +298,8 @@ public class EventListener implements Listener {
                 item.getWorld().createExplosion(item.getLocation(), blastRadius, false, false, item);
             if (destructionRadius > 0F)
                 item.getWorld().createExplosion(item.getLocation(), destructionRadius, false, true, item);
-            if (fireRadius > 0F) {
-                createFireExplosion(item.getLocation(), fireRadius, item);
-            }
-//              if (smokeRadius > 0F) item.getWorld().createExplosion(item.getLocation(), smokeRadius, true, false, item); todo smoke
+            if (fireRadius > 0F) createFireExplosion(item.getLocation(), fireRadius, item);
+            if (smokeRadius > 0F) createSmokeExplosion(item.getLocation(), smokeRadius, item);
         }
         grenadeSet.remove(item);
         item.remove();

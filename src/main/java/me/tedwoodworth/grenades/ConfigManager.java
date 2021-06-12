@@ -16,6 +16,7 @@ public class ConfigManager {
     private final RealisticGrenades plugin;
     private final FileConfiguration config;
     public static int CALCULATIONS_PER_SECOND;
+    public static double SMOKE_THICKNESS;
 
     public static ConfigManager getInstance() {
         if (instance == null) {
@@ -54,6 +55,7 @@ public class ConfigManager {
 
     private void readConfig() {
         CALCULATIONS_PER_SECOND = config.getInt("calculations-per-second");
+        SMOKE_THICKNESS = config.getDouble("smoke-thickness");
         var keys = config.getConfigurationSection("grenades").getKeys(false);
         for (var grenadeID : keys) {
             var section = config.getConfigurationSection("grenades." + grenadeID);

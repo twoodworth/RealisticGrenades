@@ -1,4 +1,5 @@
 calculations-per-second: 20
+smoke-thickness: 1.0
 grenades:
   frag_grenade:
     name: '&2Frag Grenade'
@@ -91,6 +92,41 @@ grenades:
       is-shaped: false
       amount: 4
       1A: COBBLESTONE
+  smoke-grenade:
+    name: Smoke Grenade
+    lore:
+      - '&eCreates a cloud of smoke.'
+      - ''
+      - '&bLeft Click: &7Underhand throw'
+      - '&bRight Click: &7Overhand throw'
+      - '&bHold Shift: &7Wait until unshifting to throw'
+    texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTg0YTY4ZmQ3YjYyOGQzMDk2NjdkYjdhNTU4NTViNTRhYmMyM2YzNTk1YmJlNDMyMTYyMTFiZTVmZTU3MDE0In19fQ
+    bounciness: 0.2
+    air-resistance: 0.1
+    water-resistance: 0.9
+    fuse-time: 5
+    despawn-time: 30
+    direct-hit-damage: 1.0
+    blast-radius: 0.0
+    smoke-radius: 6.0
+    fire-radius: 0.0
+    destruction-radius: 0.0
+    weight: 12.0
+    gravity: true
+    smoke-trail: true
+    explode-on-contact: false
+    recipe:
+      is-shaped: true
+      amount: 2
+      1A: IRON_NUGGET
+      1B: REDSTONE
+      1C: IRON_NUGGET
+      2A: SUGAR
+      2B: GUNPOWDER
+      2C: SUGAR
+      3A: IRON_NUGGET
+      3B: SUGAR
+      3C: IRON_NUGGET
 
 
 
