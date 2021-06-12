@@ -1,8 +1,11 @@
 package me.tedwoodworth.grenades;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.*;
@@ -10,6 +13,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -18,7 +23,7 @@ import java.util.*;
 
 public class EventListener implements Listener {
     private final Set<Player> grenadeDropList = new HashSet<>();
-    public final Set<Item> grenadeSet = new HashSet<>();
+    public Set<Item> grenadeSet = new HashSet<>();
     private final ItemManager manager = ItemManager.getInstance();
     private final RealisticGrenades plugin = RealisticGrenades.getInstance();
     private final ItemStack air = new ItemStack(Material.AIR);
@@ -67,7 +72,7 @@ public class EventListener implements Listener {
                 y += vY / 10.0;
                 z += vZ / 10.0;
                 for (var entity : nearby) {
-                    if (initialTime - remainingTime < 10L && entity.equals(player)) continue;
+                    if (initialTime - remainingTime < 30L && entity.equals(player)) continue;
                     var box = entity.getBoundingBox();
                     if (box.contains(x, y, z)) {
                         var bX = Math.min(
@@ -145,24 +150,99 @@ public class EventListener implements Listener {
         return false;
     }
 
-    public void grenadeTick(Item item) {
+    private boolean createFireExplosion(Location location, float radius, Entity source) {
+        var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
+        Bukkit.getPluginManager().callEvent(event);
+        if (!event.isCancelled()) {
+
+            location.getWorld().playSound(location, Sound.BLOCK_GLASS_BREAK, 1, 1);
+            location.getWorld().playSound(location, Sound.ITEM_FIRECHARGE_USE, 1, 1);
+            for (int i = 0; i < 30; i++) {
+                location.getWorld().spawnParticle(Particle.LAVA, location, 3, Math.random(), Math.random(), Math.random());
+            }
+            int delay = 0;
+            for (double h = radius / 5.0; h <= radius; h += radius / 5.0) {
+                var nearby = source.getNearbyEntities(h, h, h);
+                for (var entity : nearby) {
+                    if (entity instanceof LivingEntity) {
+                        (entity).setFireTicks((int) Math.max(0, 20 * (Math.pow(h, 2) - location.distanceSquared(entity.getLocation()))));
+                    }
+                }
+                double finalH = h;
+                Bukkit.getScheduler().runTaskLater(RealisticGrenades.getInstance(), () -> {
+                    var volume = (4.0 / 3.0 * Math.PI * Math.pow(finalH, 3.0)) * 0.25;
+                    var volumeWhole = (int) volume;
+                    var volumeRemainer = volume - volumeWhole;
+                    if (Math.random() < volumeRemainer) volumeWhole++;
+                    var x = location.getX();
+                    var y = location.getY();
+                    var z = location.getZ();
+                    var radiusWhole = (int) finalH;
+                    var remainder = finalH - radiusWhole;
+                    for (int i = 0; i < volumeWhole; i++) {
+                        var r = radiusWhole;
+                        if (Math.random() < remainder) r++;
+                        var tempX = x + Math.random() * 2 * r - r;
+                        var tempY = y + Math.random() * 2 * r - r;
+                        var tempZ = z + Math.random() * 2 * r - r;
+
+                        var nLoc = new Location(location.getWorld(), tempX, tempY, tempZ);
+                        var block = nLoc.getBlock();
+                        if (!block.getType().isAir()) continue;
+                        location.getWorld().spawnParticle(Particle.LAVA, nLoc, 2, Math.random(), Math.random(), Math.random());
+                        int j = 0;
+                        while (j < r && block.getLocation().getY() > 0 && block.getRelative(BlockFace.DOWN).getType().isAir()) {
+                            block = block.getRelative(BlockFace.DOWN);
+                            j++;
+                        }
+                        block.setType(Material.FIRE);
+                    }
+                    location.getWorld().playSound(location, Sound.BLOCK_FIRE_AMBIENT, 1, 1);
+                }, delay);
+                delay += 5L;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void explodeGrenade(Item item) {
         var stack = item.getItemStack();
-        var meta = stack.getItemMeta();
-        var container = meta.getPersistentDataContainer();
-        var remainingTime = container.get(Constants.REMAINING_KEY, PersistentDataType.LONG);
-        var initialTime = container.get(Constants.INITIAL_KEY, PersistentDataType.LONG);
+        var blastRadius = manager.getBlastRadius(stack);
+        var fireRadius = manager.getFireRadius(stack);
+        var destructionRadius = manager.getDestructionRadius(stack);
+        var smokeRadius = manager.getSmokeRadius(stack);
+        var primeEvent = new ExplosionPrimeEvent(item, Math.max(Math.max(Math.max(blastRadius, fireRadius), destructionRadius), smokeRadius), fireRadius > 0F);
+        Bukkit.getPluginManager().callEvent(primeEvent);
+        if (!primeEvent.isCancelled()) {
+            blastRadius = Math.min(blastRadius, primeEvent.getRadius());
+            fireRadius = Math.min(fireRadius, primeEvent.getRadius());
+            destructionRadius = Math.min(destructionRadius, primeEvent.getRadius());
+            smokeRadius = Math.min(smokeRadius, primeEvent.getRadius());
+            if (blastRadius > 0F)
+                item.getWorld().createExplosion(item.getLocation(), blastRadius, false, false, item);
+            if (destructionRadius > 0F)
+                item.getWorld().createExplosion(item.getLocation(), destructionRadius, false, true, item);
+            if (fireRadius > 0F) {
+                createFireExplosion(item.getLocation(), fireRadius, item);
+            }
+//              if (smokeRadius > 0F) item.getWorld().createExplosion(item.getLocation(), smokeRadius, true, false, item); todo smoke
+        }
+        grenadeSet.remove(item);
+        item.remove();
+    }
+
+    private void grenadeTick(Item item) {
+        if (!grenadeSet.contains(item)) return;
+        var stack = item.getItemStack();
+        var remainingTime = manager.getRemainingTime(stack);
+        var remainingDespawnTime = manager.getRemainingDespawnTime(stack);
+        var initialTime = manager.getInitialTime(stack);
         var player = getGrenadeThrower(item);
         if (remainingTime == 0) {
-            var primeEvent = new ExplosionPrimeEvent(item, 3.85F, false);
-            Bukkit.getPluginManager().callEvent(primeEvent);
-            if (!primeEvent.isCancelled()) {
-                var explodeEvent = new EntityExplodeEvent(item, item.getLocation(), new ArrayList<>(), primeEvent.getRadius());
-                Bukkit.getPluginManager().callEvent(explodeEvent);
-                item.getWorld().createExplosion(explodeEvent.getLocation(), explodeEvent.getYield(), primeEvent.getFire(), false, explodeEvent.getEntity());
-                for (var block : explodeEvent.blockList()) {
-                    block.breakNaturally();
-                }
-            }
+            explodeGrenade(item);
+            return;
+        } else if (remainingDespawnTime == 0) {
             grenadeSet.remove(item);
             item.remove();
             return;
@@ -171,9 +251,10 @@ public class EventListener implements Listener {
         var location2 = location.clone();
         var velocity = item.getVelocity();
         location2.setY(item.getLocation().getY() + 0.25);
-        if (remainingTime % 2 == 0 && initialTime - remainingTime > 2) {
+        if (manager.hasSmokeTrail(stack) && remainingTime % 2 == 0 && initialTime - remainingTime > 2) {
             item.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, location2, 1, 0.05, 0.05, 0.05, 0);
         }
+
         var nextLocation = getNextLocation(item);
         if (location.getBlock().isLiquid()) {
             velocity.setX(velocity.getX() * 0.5);
@@ -275,19 +356,29 @@ public class EventListener implements Listener {
                 if (vLength > 0.05)
                     item.getWorld().playSound(item.getLocation(), Sound.BLOCK_CHAIN_STEP, 1, 1);
                 item.setVelocity(velocity);
+                if (manager.getExplodeOnCollision(stack)) {
+                    explodeGrenade(item);
+                    return;
+                }
+            }
+        } else {
+            if (manager.getExplodeOnCollision(stack)) {
+                explodeGrenade(item);
+                return;
             }
         }
 
-        container.set(Constants.REMAINING_KEY, PersistentDataType.LONG, remainingTime - 1);
-        stack.setItemMeta(meta);
-        item.setItemStack(stack);
+        manager.setRemainingTime(stack, remainingTime - 1);
+        manager.setRemainingDespawnTime(stack, remainingDespawnTime - 1);
         Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeTick(item), 1L);
     }
 
-    private void throwGrenade(Player player, boolean isOverhand, long remainingTime) {
+    private void throwGrenade(Player player, ItemStack grenade, boolean isOverhand) {
+        var remainingTime = manager.getRemainingTime(grenade);
         if (player.isSneaking() && remainingTime != 0) { // if sneaking, don't throw yet
+            manager.setRemainingTime(grenade, remainingTime - 1);
             Bukkit.getScheduler().runTaskLater(plugin,
-                    () -> throwGrenade(player, isOverhand, remainingTime - 1), 1L);
+                    () -> throwGrenade(player, grenade, isOverhand), 1L);
             return;
         }
 
@@ -297,13 +388,12 @@ public class EventListener implements Listener {
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_SNOWBALL_THROW, 0.5f, 2.0f);
         }
 
-        var grenade = ItemManager.getInstance().getGrenade(Grenade.FRAG);
         ItemManager.getInstance().primeGrenade(grenade);
 
 
         var velocity = player.getEyeLocation().getDirection();
-        if (isOverhand) velocity.multiply(2.0);
-        else velocity.multiply(0.6);
+        if (isOverhand) velocity.multiply(7.48331477 / Math.sqrt(manager.getWeight(grenade)));
+        else velocity.multiply(2.24499443 / Math.sqrt(manager.getWeight(grenade)));
         var loc = player.getEyeLocation();
         if (isOverhand)
             loc.setY(loc.getY() + 0.33);
@@ -317,12 +407,7 @@ public class EventListener implements Listener {
 
         var drop = player.getWorld().dropItem(loc, grenade);
         var stack = drop.getItemStack();
-        var meta = stack.getItemMeta();
-        var container = meta.getPersistentDataContainer();
-        container.set(Constants.REMAINING_KEY, PersistentDataType.LONG, remainingTime);
-        container.set(Constants.INITIAL_KEY, PersistentDataType.LONG, remainingTime);
-        stack.setItemMeta(meta);
-        drop.setItemStack(stack);
+        manager.setRemainingDespawnTime(stack, 20L * manager.getDespawnTime(stack));
         setGrenadeThrower(drop, player);
         grenadeSet.add(drop);
         drop.setVelocity(velocity);
@@ -348,8 +433,25 @@ public class EventListener implements Listener {
         if (amount > 1) item.setAmount(amount - 1);
         else player.getEquipment().setItem(hand, air);
 
+        var grenade = item.clone();
+        grenade.setAmount(1);
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_CHAIN_STEP, 1, 1);
-        throwGrenade(player, isOverhand, (long) (Math.random() * 40L) + 70L);
+        manager.setRemainingTime(grenade, manager.getFuseTime(grenade) * 20);
+        throwGrenade(player, grenade, isOverhand);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    private void onEntityExplode(EntityExplodeEvent event) {
+        var entity = event.getEntity();
+        if (entity instanceof Item && manager.isGrenade(((Item) entity).getItemStack())) {
+            var blockList = event.blockList();
+            if (blockList.size() > 0) {
+                event.setCancelled(true);
+                for (var block : blockList) {
+                    block.breakNaturally();
+                }
+            }
+        }
     }
 
     @EventHandler
@@ -358,6 +460,30 @@ public class EventListener implements Listener {
         var item = drop.getItemStack();
         if (!manager.isPrimed(item)) {
             cancelPrime(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    private void onChunkLoad(ChunkLoadEvent event) {
+        var entities = event.getChunk().getEntities();
+        for (var entity : entities) {
+            if (entity instanceof Item) {
+                var item = (Item) entity;
+                if (ItemManager.getInstance().isPrimed(item.getItemStack())) {
+                    grenadeSet.add(item);
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeTick(item), 1L);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    private void onChunkUnload(ChunkUnloadEvent event) {
+        var entities = event.getChunk().getEntities();
+        for (var entity : entities) {
+            if (entity instanceof Item) {
+                grenadeSet.remove(entity);
+            }
         }
     }
 
@@ -421,6 +547,7 @@ public class EventListener implements Listener {
             }
         }
     }
+
     @EventHandler
     private void onEntityCombust(EntityCombustEvent event) {
         var entity = event.getEntity();

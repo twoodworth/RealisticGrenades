@@ -6,13 +6,11 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
 
 public class ItemManager {
     public static ItemManager instance = null;
-    private final ItemStack fragGrenade;
+    private final Map<String, ItemStack> grenades = new HashMap<>();
 
     public static ItemManager getInstance() {
         if (instance == null) {
@@ -23,57 +21,176 @@ public class ItemManager {
 
     private ItemManager() {
         // frag grenade
-        fragGrenade = getCustomSkull(Constants.FRAG_TEXTURE, Grenade.FRAG, "Frag Grenade");
     }
 
-    public ItemStack getCustomSkull(String texture, Grenade type, String... text) {
-        var head = new ItemStack(Material.PLAYER_HEAD); // create item
+    public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float damageRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, List<String> lore) {
+        var grenade = new ItemStack(Material.PLAYER_HEAD); // create item
 
         if (!texture.isEmpty()) { // set texture
             UUID hashAsId = new UUID(texture.hashCode(), texture.hashCode());
-            Bukkit.getUnsafe().modifyItemStack(head, "{SkullOwner:{Id:\"" + hashAsId + "\",Properties:{textures:[{Value:\""
+            Bukkit.getUnsafe().modifyItemStack(grenade, "{SkullOwner:{Id:\"" + hashAsId + "\",Properties:{textures:[{Value:\""
                     + texture + "\"}]}}}");
         }
 
-        var meta = head.getItemMeta();
-        if (text.length > 0 && meta != null) { // add name/lore
-            for (int i = 0; i < text.length; i++) {
-                text[i] = "" + ChatColor.RESET + text[i];
-            }
-            meta.setDisplayName("" + ChatColor.RESET + text[0]);
-            meta.setLore(new ArrayList<>(Arrays.asList(text).subList(1, text.length)));
-            head.setItemMeta(meta);
-
-            var container = meta.getPersistentDataContainer();
-            container.set(Constants.TYPE_KEY, PersistentDataType.SHORT, (short) type.ordinal());
-            head.setItemMeta(meta);
+        var meta = grenade.getItemMeta();
+        if (meta == null) {
+            System.out.println("[RealisticGrenades] Error: Meta of " + grenadeID + " item is null.");
+            return grenade;
         }
 
+        meta.setDisplayName("" + ChatColor.RESET + ChatColor.WHITE + name);
 
-        return head;
+        if (lore.size() > 0) { // add name/lore
+            for (int i = 0; i < lore.size(); i++) {
+                lore.set(i, "" + ChatColor.RESET + ChatColor.WHITE + lore.get(i));
+            }
+            meta.setLore(lore);
+            grenade.setItemMeta(meta);
+        }
+
+        var container = meta.getPersistentDataContainer();
+        container.set(Constants.GRENADE_ID_KEY, PersistentDataType.STRING, grenadeID);
+        container.set(Constants.BOUNCINESS_KEY, PersistentDataType.DOUBLE, bounciness);
+        container.set(Constants.AIR_RESISTANCE_KEY, PersistentDataType.DOUBLE, airResistance);
+        container.set(Constants.WATER_RESISTANCE_KEY, PersistentDataType.DOUBLE, waterResistance);
+        container.set(Constants.FUSE_TIME_KEY, PersistentDataType.INTEGER, fuseTime);
+        container.set(Constants.DESPAWN_TIME_KEY, PersistentDataType.INTEGER, despawnTime);
+        container.set(Constants.DIRECT_HIT_DAMAGE_KEY, PersistentDataType.DOUBLE, directHitDamage);
+        container.set(Constants.BLAST_RADIUS_KEY, PersistentDataType.FLOAT, blastRadius);
+        container.set(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT, smokeRadius);
+        container.set(Constants.FIRE_RADIUS_KEY, PersistentDataType.FLOAT, fireRadius);
+        container.set(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT, damageRadius);
+        container.set(Constants.WEIGHT_KEY, PersistentDataType.DOUBLE, weight);
+        container.set(Constants.GRAVITY_KEY, BooleanPersistentDataType.instance, hasGravity);
+        container.set(Constants.SMOKE_TRAIL_KEY, BooleanPersistentDataType.instance, hasSmokeTrail);
+        container.set(Constants.EXPLODE_ON_CONTACT_KEY, BooleanPersistentDataType.instance, explodeOnContact);
+        grenade.setItemMeta(meta);
+
+        grenades.put(grenadeID, grenade);
+        return grenade.clone();
     }
 
-    public ItemStack getGrenade(Grenade type) {
-        return switch (type) {
-            case FRAG -> fragGrenade.clone();
-            default -> fragGrenade.clone();
-        };
+    public ItemStack getGrenade(String id) {
+        return grenades.get(id).clone();
     }
 
-    public ItemStack getGrenade(Grenade type, int amount) {
-        var grenade = switch (type) {
-            case FRAG -> fragGrenade.clone();
-            default -> fragGrenade.clone();
-        };
-        grenade.setAmount(amount);
-        return grenade;
+    public int getFuseTime(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return -1;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.FUSE_TIME_KEY, PersistentDataType.INTEGER)) return -1;
+        return container.get(Constants.FUSE_TIME_KEY, PersistentDataType.INTEGER);
+    }
+
+    public long getRemainingTime(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return -1;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.REMAINING_KEY, PersistentDataType.LONG)) return -1;
+        return container.get(Constants.REMAINING_KEY, PersistentDataType.LONG);
+    }
+
+    public long getInitialTime(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return -1;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.INITIAL_KEY, PersistentDataType.LONG)) return -1;
+        return container.get(Constants.INITIAL_KEY, PersistentDataType.LONG);
+    }
+
+    public double getWeight(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 10.0;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.WEIGHT_KEY, PersistentDataType.DOUBLE)) return 10.0;
+        return container.get(Constants.WEIGHT_KEY, PersistentDataType.DOUBLE);
+    }
+
+    public float getBlastRadius(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0F;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.BLAST_RADIUS_KEY, PersistentDataType.FLOAT)) return 0.0F;
+        return container.get(Constants.BLAST_RADIUS_KEY, PersistentDataType.FLOAT);
+    }
+
+    public float getFireRadius(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0F;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.FIRE_RADIUS_KEY, PersistentDataType.FLOAT)) return 0.0F;
+        return container.get(Constants.FIRE_RADIUS_KEY, PersistentDataType.FLOAT);
+    }
+
+    public float getDestructionRadius(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0F;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT)) return 0.0F;
+        return container.get(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT);
+    }
+
+    public float getSmokeRadius(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0F;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT)) return 0.0F;
+        return container.get(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT);
+    }
+
+    public boolean hasSmokeTrail(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return false;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.SMOKE_TRAIL_KEY, BooleanPersistentDataType.instance)) return false;
+        return container.get(Constants.SMOKE_TRAIL_KEY, BooleanPersistentDataType.instance);
+    }
+
+    public void setRemainingTime(ItemStack item, long time) {
+        var meta = item.getItemMeta();
+        if (meta == null) return;
+        var container = meta.getPersistentDataContainer();
+        container.set(Constants.REMAINING_KEY, PersistentDataType.LONG, time);
+        item.setItemMeta(meta);
+    }
+
+    public void setRemainingDespawnTime(ItemStack item, long time) {
+        var meta = item.getItemMeta();
+        if (meta == null) return;
+        var container = meta.getPersistentDataContainer();
+        container.set(Constants.DESPAWN_REMAINING_KEY, PersistentDataType.LONG, time);
+        item.setItemMeta(meta);
+    }
+
+    public long getRemainingDespawnTime(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.DESPAWN_REMAINING_KEY, PersistentDataType.LONG)) return 0;
+        return container.get(Constants.DESPAWN_REMAINING_KEY, PersistentDataType.LONG);
+    }
+
+    public int getDespawnTime(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.DESPAWN_TIME_KEY, PersistentDataType.INTEGER)) return 0;
+        return container.get(Constants.DESPAWN_TIME_KEY, PersistentDataType.INTEGER);
+    }
+
+    public boolean getExplodeOnCollision(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return false;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.EXPLODE_ON_CONTACT_KEY, BooleanPersistentDataType.instance)) return false;
+        return container.get(Constants.EXPLODE_ON_CONTACT_KEY, BooleanPersistentDataType.instance);
     }
 
     public boolean isGrenade(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return false;
         var container = meta.getPersistentDataContainer();
-        return container.has(Constants.TYPE_KEY, PersistentDataType.SHORT);
+        return container.has(Constants.GRENADE_ID_KEY, PersistentDataType.STRING);
     }
 
     public boolean isPrimed(ItemStack item) {
@@ -92,13 +209,5 @@ public class ItemManager {
         var container = meta.getPersistentDataContainer();
         container.set(Constants.PRIMED_KEY, BooleanPersistentDataType.instance, true);
         grenade.setItemMeta(meta);
-    }
-
-    public Grenade getType(ItemStack item) {
-        var meta = item.getItemMeta();
-        if (meta == null) return null;
-        var container = meta.getPersistentDataContainer();
-        var ordinal = container.get(Constants.TYPE_KEY, PersistentDataType.SHORT);
-        return Grenade.values()[ordinal];
     }
 }

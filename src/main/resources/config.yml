@@ -1,0 +1,97 @@
+calculations-per-second: 20
+grenades:
+  frag_grenade:
+    name: '&2Frag Grenade'
+    lore:
+      - '&eExplodes after 5 seconds.'
+      - ''
+      - '&bLeft Click: &7Underhand throw'
+      - '&bRight Click: &7Overhand throw'
+      - '&bHold Shift: &7Wait until unshifting to throw'
+    texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvN2U1NWM1YWJjZTdhNzkyNjRhNDg5MmQ2ODgwNmVhYWZlMzcwYTBlNGRkMjZmNTYxOTFmN2MxODhmMDFlZDcyNiJ9fX0
+    bounciness: 0.6
+    air-resistance: 0.1
+    water-resistance: 0.9
+    fuse-time: 5
+    despawn-time: 6
+    direct-hit-damage: 1.0
+    blast-radius: 3.75
+    smoke-radius: 0.0
+    fire-radius: 0.0
+    destruction-radius: 1.0
+    weight: 14.0
+    gravity: true
+    smoke-trail: true
+    explode-on-contact: false
+    recipe:
+      is-shaped: true
+      amount: 2
+      1A: REDSTONE
+      1B: IRON_NUGGET
+      1C: IRON_NUGGET
+      2A: IRON_NUGGET
+      2B: GUNPOWDER
+      2C: IRON_NUGGET
+      3A: IRON_NUGGET
+      3B: IRON_NUGGET
+      3C: IRON_NUGGET
+  molotov:
+    name: '&cMolotov Cocktail'
+    lore:
+      - '&eExplodes into fire.'
+      - ''
+      - '&bLeft Click: &7Underhand throw'
+      - '&bRight Click: &7Overhand throw'
+      - '&bHold Shift: &7Wait until unshifting to throw'
+    texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmQyYjY1Yjc5YjQ5MDQ1MTRhMGZjNzIzMmVhODlhOWU4YzZhYzYwZWUzZGJhMWI1OTc1Yjc3NTUxMjczMzhhNCJ9fX0
+    bounciness: 0.0
+    air-resistance: 0.1
+    water-resistance: 0.9
+    fuse-time: -1
+    despawn-time: 20
+    direct-hit-damage: 3.0
+    blast-radius: 0.0
+    smoke-radius: 0.0
+    fire-radius: 4.0
+    destruction-radius: 0.0
+    weight: 30.0
+    gravity: true
+    smoke-trail: true
+    explode-on-contact: true
+    recipe:
+      is-shaped: false
+      amount: 2
+      1A: PAPER
+      1B: BLAZE_POWDER
+      1C: GLASS_BOTTLE
+  rock:
+    name: Rock
+    lore:
+      - '&eThe original ranged weapon.'
+      - ''
+      - '&bLeft Click: &7Underhand throw'
+      - '&bRight Click: &7Overhand throw'
+      - '&bHold Shift: &7Wait until unshifting to throw'
+    texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvY2IyYjVkNDhlNTc1Nzc1NjNhY2EzMTczNTUxOWNiNjIyMjE5YmMwNThiMWYzNDY0OGI2N2I4ZTcxYmMwZmEifX19
+    bounciness: 0.2
+    air-resistance: 0.1
+    water-resistance: 0.9
+    fuse-time: -1
+    despawn-time: 8
+    direct-hit-damage: 4.0
+    blast-radius: 0.0
+    smoke-radius: 0.0
+    fire-radius: 0.0
+    destruction-radius: 0.0
+    weight: 9.0
+    gravity: true
+    smoke-trail: false
+    explode-on-contact: false
+    recipe:
+      is-shaped: false
+      amount: 4
+      1A: COBBLESTONE
+
+
+
+
