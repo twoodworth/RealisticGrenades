@@ -1,7 +1,6 @@
 package me.tedwoodworth.grenades;
 
 import org.bukkit.*;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -20,15 +19,18 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.BoundingBox;
 
 import java.util.*;
 
 public class EventListener implements Listener {
     private final Set<Player> grenadeDropList = new HashSet<>();
     public Set<Item> grenadeSet = new HashSet<>();
+    public Set<Player> throwerSet = new HashSet<>();
     private final ItemManager manager = ItemManager.getInstance();
     private final RealisticGrenades plugin = RealisticGrenades.getInstance();
     private final ItemStack air = new ItemStack(Material.AIR);
+    private static final HashMap<Item, HashSet<Entity>> hitList = new HashMap<>();
 
     public Player getGrenadeThrower(Item item) {
         var stack = item.getItemStack();
@@ -46,110 +48,6 @@ public class EventListener implements Listener {
         container.set(Constants.THROWER_KEY, PersistentDataType.STRING, player.getUniqueId().toString());
         stack.setItemMeta(meta);
         item.setItemStack(stack);
-    }
-
-    private Location getNextLocation(Item item) {
-        var location = item.getLocation();
-        var velocity = item.getVelocity();
-        return new Location(location.getWorld(), location.getX() + velocity.getX(), location.getY() + velocity.getY(), location.getZ() + velocity.getZ());
-    }
-
-    private boolean entityCollision(Item item, Location location, Location nextLocation, Player player, long remainingTime, long initialTime) {
-        var xDist = Math.abs(location.getX() - nextLocation.getX());
-        var yDist = Math.abs(location.getY() - nextLocation.getY());
-        var zDist = Math.abs(location.getZ() - nextLocation.getZ());
-
-        var nearby = item.getNearbyEntities(xDist, yDist, zDist);
-        if (nearby.size() == 0) return false;
-        else {
-            var x = location.getX();
-            var y = location.getY();
-            var z = location.getZ();
-            var v = item.getVelocity();
-            var vX = v.getX();
-            var vY = v.getY();
-            var vZ = v.getZ();
-            for (int i = 1; i <= 10; i++) {
-                x += vX / 10.0;
-                y += vY / 10.0;
-                z += vZ / 10.0;
-                for (var entity : nearby) {
-                    if (initialTime - remainingTime < 30L && entity.equals(player)) continue;
-                    var box = entity.getBoundingBox();
-                    if (box.contains(x, y, z)) {
-                        var bX = Math.min(
-                                Math.abs(x - box.getMinX()),
-                                Math.abs(x - box.getMaxX())
-                        );
-                        var bY = Math.min(
-                                Math.abs(y - box.getMinY()),
-                                Math.abs(y - box.getMaxY())
-                        );
-                        var bZ = Math.min(
-                                Math.abs(z - box.getMinZ()),
-                                Math.abs(z - box.getMaxZ())
-                        );
-                        var b = new double[3];
-                        b[0] = bX;
-                        b[1] = bY;
-                        b[2] = bZ;
-
-                        var vLength = item.getVelocity().length();
-                        Arrays.sort(b);
-                        if (b[0] == bX) v.setX(-1 * v.getX());
-                        else if (b[0] == bY) v.setY(-1 * v.getY());
-                        else v.setZ(-1 * v.getZ());
-
-
-                        if ((entity instanceof LivingEntity && !(entity instanceof Bee))
-                                || entity instanceof EnderCrystal
-                                || entity instanceof ArmorStand) {
-                            v.add(entity.getVelocity());
-                            v.setX(0.15 * v.getX());
-                            v.setY(0.15 * v.getY());
-                            v.setZ(0.15 * v.getZ());
-                        } else if (
-                                entity instanceof Item
-                                        || entity instanceof Explosive
-                                        || entity instanceof Projectile
-                                        || entity instanceof Bee
-                                        || entity instanceof FallingBlock) {
-                            var half = v.clone();
-                            half.setX(v.getX() / 2);
-                            half.setY(v.getY() / 2);
-                            half.setZ(v.getZ() / 2);
-
-                            var eV = entity.getVelocity();
-                            var half2 = eV.clone();
-                            half2.setX(eV.getX() / 2);
-                            half2.setY(eV.getY() / 2);
-                            half2.setZ(eV.getZ() / 2);
-                            v.add(half2);
-                            eV.add(half);
-                            entity.setVelocity(eV);
-
-                        } else if (
-                                entity instanceof Minecart
-                                        || entity instanceof Boat) {
-                            v.add(entity.getVelocity());
-                        }
-
-                        item.setVelocity(v);
-
-                        if (vLength > 0.05) {
-                            item.getWorld().playSound(item.getLocation(), Sound.BLOCK_CHAIN_STEP, 1, 1);
-                        }
-
-                        if (entity instanceof LivingEntity && vLength > 0.25) {
-                            player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1, 1);
-                            ((LivingEntity) entity).damage(1);
-                        }
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     private boolean createFireExplosion(Location location, float radius, Entity source) {
@@ -294,8 +192,7 @@ public class EventListener implements Listener {
             fireRadius = Math.min(fireRadius, primeEvent.getRadius());
             destructionRadius = Math.min(destructionRadius, primeEvent.getRadius());
             smokeRadius = Math.min(smokeRadius, primeEvent.getRadius());
-            if (blastRadius > 0F)
-                item.getWorld().createExplosion(item.getLocation(), blastRadius, false, false, item);
+            if (blastRadius > 0F) item.getWorld().createExplosion(item.getLocation(), blastRadius, false, false, item);
             if (destructionRadius > 0F)
                 item.getWorld().createExplosion(item.getLocation(), destructionRadius, false, true, item);
             if (fireRadius > 0F) createFireExplosion(item.getLocation(), fireRadius, item);
@@ -311,133 +208,277 @@ public class EventListener implements Listener {
         var remainingTime = manager.getRemainingTime(stack);
         var remainingDespawnTime = manager.getRemainingDespawnTime(stack);
         var initialTime = manager.getInitialTime(stack);
-        var player = getGrenadeThrower(item);
         if (remainingTime == 0) {
+            hitList.remove(item);
             explodeGrenade(item);
             return;
         } else if (remainingDespawnTime == 0) {
+            hitList.remove(item);
             grenadeSet.remove(item);
             item.remove();
             return;
         }
         var location = item.getLocation();
-        var location2 = location.clone();
-        var velocity = item.getVelocity();
-        location2.setY(item.getLocation().getY() + 0.25);
         if (manager.hasSmokeTrail(stack) && remainingTime % 2 == 0 && initialTime - remainingTime > 2) {
+            var location2 = location.clone();
+            location2.setY(item.getLocation().getY() + 0.25);
             item.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, location2, 1, 0.05, 0.05, 0.05, 0);
         }
 
-        var nextLocation = getNextLocation(item);
-        if (location.getBlock().isLiquid()) {
-            velocity.setX(velocity.getX() * 0.5);
-            velocity.setY(velocity.getY() * 0.5);
-            velocity.setY(velocity.getY() * 0.5);
+
+        if (manager.beeps(stack)) {
+            if (remainingTime < 20 && remainingTime % 2 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f + (20 - remainingTime) / 120.0f);
+            } else if (remainingTime < 81 && remainingTime % 5 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 201 && remainingTime % 10 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 51 && remainingTime % 8 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 241 && remainingTime % 20 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 421 && remainingTime % 30 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 601 && remainingTime % 60 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 1001 && remainingTime % 100 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 2501 && remainingTime % 250 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime < 5001 && remainingTime % 500 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            } else if (remainingTime % 2500 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+            }
         }
 
-        if (!entityCollision(item, location, nextLocation, player, remainingTime, initialTime)) {
-            var vLength = velocity.length();
 
-            // X-axis check
-            var magnitude = Math.abs(nextLocation.getBlockX() - location.getBlockX());
-            if (velocity.getX() > 0
-                    && nextLocation.getBlockX() - location.getBlockX() >= 1) {
-                var colliding = true;
-                for (int i = 1; i <= magnitude; i++) {
-                    if (item.getWorld().getBlockAt(location.getBlockX() + i, location.getBlockY(), location.getBlockZ()).isPassable()) {
-                        colliding = false;
-                        break;
-                    }
-                }
-                if (colliding)
-                    velocity.setX(-0.5 * velocity.getX());
-            } else if (velocity.getX() < 0
-                    && nextLocation.getBlockX() - location.getBlockX() <= -1) {
-                var colliding = false;
-                for (int i = 1; i <= magnitude; i++) {
-                    if (!item.getWorld().getBlockAt(location.getBlockX() - i, location.getBlockY(), location.getBlockZ()).isPassable()) {
-                        colliding = true;
-                        break;
-                    }
-                }
-                if (colliding)
-                    velocity.setX(-0.5 * velocity.getX());
-            }
-            var overallColliding = false;
+        var velocity = item.getVelocity();
+        var calculations = ConfigManager.CALCULATIONS_PER_TICK;
 
-            // Y-axis check
-            magnitude = Math.abs(nextLocation.getBlockY() - location.getBlockY());
-            if (velocity.getY() > 0
-                    && nextLocation.getBlockY() - location.getBlockY() >= 1) {
-                var colliding = true;
-                for (int i = 1; i <= magnitude; i++) {
-                    if (item.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() + i, location.getBlockZ()).isPassable()) {
-                        colliding = false;
-                        break;
-                    }
-                }
-                if (colliding) {
-                    velocity.setY(-0.5 * velocity.getY());
-                    overallColliding = true;
-                }
 
-            } else if (velocity.getY() < 0
-                    && nextLocation.getBlockY() - location.getBlockY() <= -1) {
-                var colliding = false;
-                for (int i = 1; i <= magnitude; i++) {
-                    if (!item.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() - i, location.getBlockZ()).isPassable()) {
-                        colliding = true;
-                        break;
-                    }
-                }
-                if (colliding) {
-                    velocity.setY(-0.5 * velocity.getY());
-                    overallColliding = true;
+        var interval = velocity.clone().multiply(1.0 / calculations);
+        var curLoc = location.clone();
+        var world = location.getWorld();
+        var bounciness = manager.getBounciness(stack);
+        var airRes = manager.getAirResistance(stack);
+        var waterRes = manager.getWaterResistance(stack);
+        var m2 = manager.getWeight(stack);
+        var alreadyCollidedX = new HashSet<Entity>();
+        var alreadyCollidedY = new HashSet<Entity>();
+        var alreadyCollidedZ = new HashSet<Entity>();
+        hitList.putIfAbsent(item, new HashSet<>());
+        for (int i = 0; i < calculations; i++) {
+            var collides = false;
+            var tempLocX = curLoc.clone().add(interval.getX(), 0, 0);
+            var tempLocY = curLoc.clone().add(0, interval.getY(), 0);
+            var tempLocZ = curLoc.clone().add(0, 0, interval.getZ());
+
+            var boxX = new BoundingBox(tempLocX.getX() - 0.125, tempLocX.getY(), tempLocX.getZ() - 0.125, tempLocX.getX() + 0.125, tempLocX.getY() + 0.25, tempLocX.getZ() + 0.125);
+            var boxY = new BoundingBox(tempLocY.getX() - 0.125, tempLocY.getY(), tempLocY.getZ() - 0.125, tempLocY.getX() + 0.125, tempLocY.getY() + 0.25, tempLocY.getZ() + 0.125);
+            var boxZ = new BoundingBox(tempLocZ.getX() - 0.125, tempLocZ.getY(), tempLocZ.getZ() - 0.125, tempLocZ.getX() + 0.125, tempLocZ.getY() + 0.25, tempLocZ.getZ() + 0.125);
+
+            var nearbyX = world.getNearbyEntities(boxX);
+            var nearbyY = world.getNearbyEntities(boxY);
+            var nearbyZ = world.getNearbyEntities(boxZ);
+
+            nearbyX.remove(item);
+            nearbyY.remove(item);
+            nearbyZ.remove(item);
+
+            var entityX = nearbyX.size() > 0;
+            var entityY = nearbyY.size() > 0;
+            var entityZ = nearbyZ.size() > 0;
+
+            var blockX = tempLocX.getBlock();
+            var blockY = tempLocY.getBlock();
+            var blockZ = tempLocZ.getBlock();
+
+            var xCollide = !blockX.isPassable() && !blockX.isLiquid();
+            var yCollide = !blockY.isPassable() && !blockY.isLiquid();
+            var zCollide = !blockZ.isPassable() && !blockZ.isLiquid();
+
+            var nXcollide = xCollide;
+            var nYcollide = yCollide;
+            var nZcollide = zCollide;
+
+            if (!xCollide && !yCollide) {
+                var blockXY = curLoc.clone().add(interval.getX(), interval.getY(), 0).getBlock();
+                if (!blockXY.isPassable() && !blockXY.isLiquid()) {
+                    nXcollide = true;
+                    nYcollide = true;
                 }
             }
-
-            // Z-axis check
-            magnitude = Math.abs(nextLocation.getBlockZ() - location.getBlockZ());
-            if (velocity.getZ() > 0
-                    && nextLocation.getBlockZ() - location.getBlockZ() >= 1) {
-                var colliding = true;
-                for (int i = 1; i <= magnitude; i++) {
-                    if (item.getWorld().getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ() + i).isPassable()) {
-                        colliding = false;
-                        break;
-                    }
-                }
-                if (colliding) {
-                    velocity.setZ(-0.5 * velocity.getZ());
-                    overallColliding = true;
-                }
-            } else if (velocity.getZ() < 0
-                    && nextLocation.getBlockZ() - location.getBlockZ() <= -1) {
-                var colliding = false;
-                for (int i = 1; i <= magnitude; i++) {
-                    if (!item.getWorld().getBlockAt(location.getBlockX(), location.getBlockY(), location.getBlockZ() - i).isPassable()) {
-                        colliding = true;
-                        break;
-                    }
-                }
-                if (colliding) {
-                    overallColliding = true;
-                    velocity.setZ(-0.5 * velocity.getZ());
+            if (!xCollide && !zCollide) {
+                var blockXZ = curLoc.clone().add(interval.getX(), 0, interval.getZ()).getBlock();
+                if (!blockXZ.isPassable() && !blockXZ.isLiquid()) {
+                    nXcollide = true;
+                    nZcollide = true;
                 }
             }
-            if (overallColliding) {
-                if (vLength > 0.05)
-                    item.getWorld().playSound(item.getLocation(), Sound.BLOCK_CHAIN_STEP, 1, 1);
-                item.setVelocity(velocity);
+            if (!yCollide && !zCollide) {
+                var blockYZ = curLoc.clone().add(0, interval.getY(), interval.getZ()).getBlock();
+                if (!blockYZ.isPassable() && !blockYZ.isLiquid()) {
+                    nYcollide = true;
+                    nZcollide = true;
+                }
+            }
+            if (entityX) {
+                var entity = nearbyX.toArray()[0];
+                if (!hitList.get(item).contains(entity)) {
+                    if (entity instanceof LivingEntity) {
+                        var living = ((LivingEntity) entity);
+                        var livingVel = living.getVelocity();
+                        var m1 = living.getBoundingBox().getVolume() * 100;
+                        var v1 = livingVel.getX();
+                        var v2 = velocity.getX();
+                        var p1 = m1 * v1;
+                        var p2 = m2 * v2;
+
+                        var p1prime = .7 * p1 + .4 * p2;
+                        var p2prime = .3 * p1 + .6 * p2;
+
+                        var v1prime = p1prime / m1;
+                        var v2prime = p2prime / m2;
+
+                        velocity.setX(v2prime);
+                        interval.setX(velocity.getX() / calculations);
+                        livingVel.setX(v1prime);
+                        ((LivingEntity) entity).setVelocity(livingVel);
+                    } else {
+                        velocity.setX(-bounciness * velocity.getX());
+                        interval.setX(-bounciness * interval.getX());
+                    }
+                    alreadyCollidedX.add((Entity) entity);
+                    collides = true;
+                }
+            } else if (nXcollide) {
+                velocity.setX(-bounciness * velocity.getX());
+                interval.setX(-bounciness * interval.getX());
+                collides = true;
+            }
+            if (entityY) {
+                var entity = nearbyY.toArray()[0];
+                if (!hitList.get(item).contains(entity)) {
+                    if (entity instanceof LivingEntity) {
+                        var living = ((LivingEntity) entity);
+                        var livingVel = living.getVelocity();
+                        var m1 = living.getBoundingBox().getVolume() * 100;
+                        var v1 = livingVel.getY();
+                        var v2 = velocity.getY();
+                        var p1 = m1 * v1;
+                        var p2 = m2 * v2;
+
+                        var p1prime = .7 * p1 + .4 * p2;
+                        var p2prime = .3 * p1 + .6 * p2;
+
+                        var v1prime = p1prime / m1;
+                        var v2prime = p2prime / m2;
+
+                        velocity.setY(v2prime);
+                        interval.setY(velocity.getY() / calculations);
+                        livingVel.setY(v1prime);
+                        ((LivingEntity) entity).setVelocity(livingVel);
+                    } else {
+                        velocity.setY(-bounciness * velocity.getY());
+                        interval.setY(-bounciness * interval.getY());
+                    }
+                    collides = true;
+                    alreadyCollidedY.add((Entity) entity);
+                }
+            } else if (nYcollide) {
+                velocity.setY(-bounciness * velocity.getY());
+                interval.setY(-bounciness * interval.getY());
+                collides = true;
+            }
+            if (entityZ) {
+                var entity = nearbyZ.toArray()[0];
+                if (!hitList.get(item).contains(entity)) {
+                    if (entity instanceof LivingEntity) {
+                        var living = ((LivingEntity) entity);
+                        var livingVel = living.getVelocity();
+                        var m1 = living.getBoundingBox().getVolume() * 100;
+                        var v1 = livingVel.getZ();
+                        var v2 = velocity.getZ();
+                        var p1 = m1 * v1;
+                        var p2 = m2 * v2;
+
+                        var p1prime = .7 * p1 + .4 * p2;
+                        var p2prime = .3 * p1 + .6 * p2;
+
+                        var v1prime = p1prime / m1;
+                        var v2prime = p2prime / m2;
+
+                        velocity.setZ(v2prime);
+                        interval.setZ(velocity.getZ() / calculations);
+                        livingVel.setZ(v1prime);
+                        ((LivingEntity) entity).setVelocity(livingVel);
+                    } else {
+                        velocity.setZ(-bounciness * velocity.getZ());
+                        interval.setZ(-bounciness * interval.getZ());
+                    }
+                    collides = true;
+                    alreadyCollidedZ.add((Entity) entity);
+                }
+            } else if (nZcollide) {
+                velocity.setZ(-bounciness * velocity.getZ());
+                interval.setZ(-bounciness * interval.getZ());
+                collides = true;
+            }
+
+            curLoc.add(interval);
+            var block = curLoc.getBlock();
+            if (block.isLiquid()) {
+                velocity.multiply(1 - waterRes);
+                interval.multiply(1 - waterRes);
+            } else if (block.isPassable()) {
+                velocity.multiply(1 - airRes);
+                interval.multiply(1 - airRes);
+            }
+            item.setVelocity(velocity);
+            var player = getGrenadeThrower(item);
+            var contains = false;
+            var set = hitList.get(item);
+            var damage = manager.getDirectHitDamage(stack);
+            for (var entity : alreadyCollidedX) {
+                if (entity instanceof LivingEntity && !entity.equals(player) && !set.contains(entity)) {
+                    contains = true;
+                    if (damage > 0.0) {
+                        ((LivingEntity) entity).damage(damage);
+                    }
+                }
+                set.add(entity);
+            }
+            for (var entity : alreadyCollidedY) {
+                if (entity instanceof LivingEntity && !entity.equals(player) && !set.contains(entity)) {
+                    contains = true;
+                    if (damage > 0.0) {
+                        ((LivingEntity) entity).damage(damage);
+                    }
+                }
+                set.add(entity);
+            }
+            for (var entity : alreadyCollidedZ) {
+                if (entity instanceof LivingEntity && !entity.equals(player) && !set.contains(entity)) {
+                    contains = true;
+                    if (damage > 0.0) {
+                        ((LivingEntity) entity).damage(damage);
+                    }
+                }
+                set.add(entity);
+            }
+            if (player != null && player.isOnline() && contains) {
+                getGrenadeThrower(item).playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 0.5f, 1f);
+            }
+
+            if (collides) {
+                if (velocity.length() > 0.05) {
+                    item.getWorld().playSound(item.getLocation(), Sound.BLOCK_CHAIN_STEP, 0.3f, 1);
+                }
                 if (manager.getExplodeOnCollision(stack)) {
                     explodeGrenade(item);
                     return;
                 }
-            }
-        } else {
-            if (manager.getExplodeOnCollision(stack)) {
-                explodeGrenade(item);
-                return;
             }
         }
 
@@ -448,13 +489,14 @@ public class EventListener implements Listener {
 
     private void throwGrenade(Player player, ItemStack grenade, boolean isOverhand) {
         var remainingTime = manager.getRemainingTime(grenade);
-        if (player.isSneaking() && remainingTime != 0) { // if sneaking, don't throw yet
+        if (player.isOnline() && !player.isDead() && player.isSneaking() && remainingTime != 0) { // if sneaking, don't throw yet
             manager.setRemainingTime(grenade, remainingTime - 1);
             Bukkit.getScheduler().runTaskLater(plugin,
                     () -> throwGrenade(player, grenade, isOverhand), 1L);
             return;
         }
 
+        throwerSet.remove(player);
         if (isOverhand) { // play sound
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_SNOWBALL_THROW, 1, 1);
         } else {
@@ -474,6 +516,7 @@ public class EventListener implements Listener {
             loc.setY(loc.getY() - 0.6);
 
         velocity.add(player.getVelocity());
+        loc.add(velocity);
         velocity.setY(velocity.getY() + (Math.random() - 0.5) * 0.025);
         velocity.setX(velocity.getX() + (Math.random() - 0.5) * 0.025);
         velocity.setZ(velocity.getZ() + (Math.random() - 0.5) * 0.025);
@@ -485,6 +528,7 @@ public class EventListener implements Listener {
         grenadeSet.add(drop);
         drop.setVelocity(velocity);
         drop.setPickupDelay(1000);
+        drop.setGravity(manager.getHasGravity(stack));
         grenadeTick(drop);
     }
 
@@ -510,6 +554,7 @@ public class EventListener implements Listener {
         grenade.setAmount(1);
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_CHAIN_STEP, 1, 1);
         manager.setRemainingTime(grenade, manager.getFuseTime(grenade) * 20);
+        throwerSet.add(player);
         throwGrenade(player, grenade, isOverhand);
     }
 
@@ -578,9 +623,11 @@ public class EventListener implements Listener {
         var item = event.getItem();
         if (item == null) return;
         var action = event.getAction();
-
+        var player = event.getPlayer();
         if (manager.isGrenade(item) && (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK)) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeUse(item, action, event.getPlayer(), event.getHand()), 2L);
+            if (!throwerSet.contains(player)) {
+                Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeUse(item, action, player, event.getHand()), 2L);
+            }
             event.setCancelled(true);
         }
     }

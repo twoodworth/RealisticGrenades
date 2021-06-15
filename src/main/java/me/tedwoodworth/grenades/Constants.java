@@ -1,7 +1,5 @@
 package me.tedwoodworth.grenades;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 
 public class Constants {
@@ -27,6 +25,5 @@ public class Constants {
     public static final NamespacedKey DESPAWN_REMAINING_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "despawn_remaining");
     public static final NamespacedKey INITIAL_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "initial");
     public static final NamespacedKey THROWER_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "thrower");
-
-    public static final Location FAKE_LOCATION = new Location(Bukkit.getWorlds().get(0), 0.666, 0.69, 0.420);
+    public static final NamespacedKey BEEPS_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "beeps");
 }

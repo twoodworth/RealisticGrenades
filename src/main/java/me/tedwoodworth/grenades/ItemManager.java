@@ -23,7 +23,33 @@ public class ItemManager {
         // frag grenade
     }
 
-    public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float damageRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, List<String> lore) {
+    private String colorizeText(String text) {
+        text = text.replaceAll("&0", ChatColor.BLACK.toString());
+        text = text.replaceAll("&1", ChatColor.DARK_BLUE.toString());
+        text = text.replaceAll("&2", ChatColor.DARK_GREEN.toString());
+        text = text.replaceAll("&3", ChatColor.DARK_AQUA.toString());
+        text = text.replaceAll("&4", ChatColor.DARK_RED.toString());
+        text = text.replaceAll("&5", ChatColor.DARK_PURPLE.toString());
+        text = text.replaceAll("&6", ChatColor.GOLD.toString());
+        text = text.replaceAll("&7", ChatColor.GRAY.toString());
+        text = text.replaceAll("&8", ChatColor.DARK_GRAY.toString());
+        text = text.replaceAll("&9", ChatColor.BLUE.toString());
+        text = text.replaceAll("&a", ChatColor.GREEN.toString());
+        text = text.replaceAll("&b", ChatColor.AQUA.toString());
+        text = text.replaceAll("&c", ChatColor.RED.toString());
+        text = text.replaceAll("&d", ChatColor.LIGHT_PURPLE.toString());
+        text = text.replaceAll("&e", ChatColor.YELLOW.toString());
+        text = text.replaceAll("&f", ChatColor.WHITE.toString());
+        text = text.replaceAll("&k", ChatColor.MAGIC.toString());
+        text = text.replaceAll("&l", ChatColor.BOLD.toString());
+        text = text.replaceAll("&m", ChatColor.STRIKETHROUGH.toString());
+        text = text.replaceAll("&n", ChatColor.UNDERLINE.toString());
+        text = text.replaceAll("&o", ChatColor.ITALIC.toString());
+        text = text.replaceAll("&r", ChatColor.RESET.toString());
+        return text;
+    }
+
+    public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float damageRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, boolean beeps, List<String> lore) {
         var grenade = new ItemStack(Material.PLAYER_HEAD); // create item
 
         if (!texture.isEmpty()) { // set texture
@@ -38,11 +64,11 @@ public class ItemManager {
             return grenade;
         }
 
-        meta.setDisplayName("" + ChatColor.RESET + ChatColor.WHITE + name);
+        meta.setDisplayName("" + ChatColor.RESET + ChatColor.WHITE + colorizeText(name));
 
         if (lore.size() > 0) { // add name/lore
             for (int i = 0; i < lore.size(); i++) {
-                lore.set(i, "" + ChatColor.RESET + ChatColor.WHITE + lore.get(i));
+                lore.set(i, "" + ChatColor.RESET + ChatColor.WHITE + colorizeText(lore.get(i)));
             }
             meta.setLore(lore);
             grenade.setItemMeta(meta);
@@ -64,6 +90,7 @@ public class ItemManager {
         container.set(Constants.GRAVITY_KEY, BooleanPersistentDataType.instance, hasGravity);
         container.set(Constants.SMOKE_TRAIL_KEY, BooleanPersistentDataType.instance, hasSmokeTrail);
         container.set(Constants.EXPLODE_ON_CONTACT_KEY, BooleanPersistentDataType.instance, explodeOnContact);
+        container.set(Constants.BEEPS_KEY, BooleanPersistentDataType.instance, beeps);
         grenade.setItemMeta(meta);
 
         grenades.put(grenadeID, grenade);
@@ -80,6 +107,14 @@ public class ItemManager {
         var container = meta.getPersistentDataContainer();
         if (!container.has(Constants.FUSE_TIME_KEY, PersistentDataType.INTEGER)) return -1;
         return container.get(Constants.FUSE_TIME_KEY, PersistentDataType.INTEGER);
+    }
+
+    public boolean beeps(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return false;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.BEEPS_KEY, BooleanPersistentDataType.instance)) return false;
+        return container.get(Constants.BEEPS_KEY, BooleanPersistentDataType.instance);
     }
 
     public long getRemainingTime(ItemStack item) {
@@ -106,6 +141,30 @@ public class ItemManager {
         return container.get(Constants.WEIGHT_KEY, PersistentDataType.DOUBLE);
     }
 
+    public double getAirResistance(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.AIR_RESISTANCE_KEY, PersistentDataType.DOUBLE)) return 0.0;
+        return 1 - Math.pow(1 - container.get(Constants.AIR_RESISTANCE_KEY, PersistentDataType.DOUBLE), 1 / (20.0 * ConfigManager.CALCULATIONS_PER_TICK));
+    }
+
+    public double getWaterResistance(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.WATER_RESISTANCE_KEY, PersistentDataType.DOUBLE)) return 0.0;
+        return 1 - Math.pow(1 - container.get(Constants.WATER_RESISTANCE_KEY, PersistentDataType.DOUBLE), 1 / (20.0 * ConfigManager.CALCULATIONS_PER_TICK));
+    }
+
+    public boolean getHasGravity(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return true;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.GRAVITY_KEY, BooleanPersistentDataType.instance)) return true;
+        return container.get(Constants.GRAVITY_KEY, BooleanPersistentDataType.instance);
+    }
+
     public float getBlastRadius(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0F;
@@ -128,6 +187,22 @@ public class ItemManager {
         var container = meta.getPersistentDataContainer();
         if (!container.has(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT)) return 0.0F;
         return container.get(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT);
+    }
+
+    public double getBounciness(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.BOUNCINESS_KEY, PersistentDataType.DOUBLE)) return 0.0;
+        return container.get(Constants.BOUNCINESS_KEY, PersistentDataType.DOUBLE);
+    }
+
+    public double getDirectHitDamage(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.DIRECT_HIT_DAMAGE_KEY, PersistentDataType.DOUBLE)) return 0.0;
+        return container.get(Constants.DIRECT_HIT_DAMAGE_KEY, PersistentDataType.DOUBLE);
     }
 
     public float getSmokeRadius(ItemStack item) {

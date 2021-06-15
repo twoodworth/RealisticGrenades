@@ -9,13 +9,12 @@ import org.bukkit.inventory.ShapelessRecipe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class ConfigManager {
     private static ConfigManager instance = null;
     private final RealisticGrenades plugin;
     private final FileConfiguration config;
-    public static int CALCULATIONS_PER_SECOND;
+    public static int CALCULATIONS_PER_TICK;
     public static double SMOKE_THICKNESS;
 
     public static ConfigManager getInstance() {
@@ -54,7 +53,7 @@ public class ConfigManager {
     }
 
     private void readConfig() {
-        CALCULATIONS_PER_SECOND = config.getInt("calculations-per-second");
+        CALCULATIONS_PER_TICK = config.getInt("calculations-per-tick");
         SMOKE_THICKNESS = config.getDouble("smoke-thickness");
         var keys = config.getConfigurationSection("grenades").getKeys(false);
         for (var grenadeID : keys) {
@@ -137,7 +136,7 @@ public class ConfigManager {
                 System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'destruction-radius' setting in the config.");
                 continue;
             }
-            var damageRadius = (float) section.getDouble("damage-radius");
+            var destructionRadius = (float) section.getDouble("destruction-radius");
 
             if (!section.contains("weight")) {
                 System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'weight' setting in the config.");
@@ -162,6 +161,12 @@ public class ConfigManager {
                 continue;
             }
             var explodeOnContact = section.getBoolean("explode-on-contact");
+
+            if (!section.contains("beeps")) {
+                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'beeps' setting in the config.");
+                continue;
+            }
+            var beeps = section.getBoolean("beeps");
             var recipeSection = section.getConfigurationSection("recipe");
             if (recipeSection == null) {
                 System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'recipe' setting in the config.");
@@ -224,7 +229,27 @@ public class ConfigManager {
             }
             if (unknown) continue;
 
-            var grenade = ItemManager.getInstance().createGrenade(texture, grenadeID, name, bounciness, airResistance, waterResistance, fuseTime, despawnTime, directHitDamage, blastRadius, smokeRadius, fireRadius, damageRadius, weight, hasGravity, hasSmokeTrail, explodeOnContact, lore);
+            var grenade = ItemManager.getInstance().createGrenade(
+                    texture,
+                    grenadeID,
+                    name,
+                    bounciness,
+                    airResistance,
+                    waterResistance,
+                    fuseTime,
+                    despawnTime,
+                    directHitDamage,
+                    blastRadius,
+                    smokeRadius,
+                    fireRadius,
+                    destructionRadius,
+                    weight,
+                    hasGravity,
+                    hasSmokeTrail,
+                    explodeOnContact,
+                    beeps,
+                    lore
+            );
             grenade.setAmount(amount);
 
 

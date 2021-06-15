@@ -1,4 +1,4 @@
-calculations-per-second: 20
+calculations-per-tick: 20
 smoke-thickness: 1.0
 grenades:
   frag_grenade:
@@ -11,19 +11,20 @@ grenades:
       - '&bHold Shift: &7Wait until unshifting to throw'
     texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvN2U1NWM1YWJjZTdhNzkyNjRhNDg5MmQ2ODgwNmVhYWZlMzcwYTBlNGRkMjZmNTYxOTFmN2MxODhmMDFlZDcyNiJ9fX0
     bounciness: 0.6
-    air-resistance: 0.1
-    water-resistance: 0.9
+    air-resistance: 0.05
+    water-resistance: 0.8
     fuse-time: 5
     despawn-time: 6
     direct-hit-damage: 1.0
     blast-radius: 3.75
     smoke-radius: 0.0
     fire-radius: 0.0
-    destruction-radius: 1.0
+    destruction-radius: 0.25
     weight: 14.0
     gravity: true
     smoke-trail: true
     explode-on-contact: false
+    beeps: false
     recipe:
       is-shaped: true
       amount: 2
@@ -46,7 +47,7 @@ grenades:
       - '&bHold Shift: &7Wait until unshifting to throw'
     texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmQyYjY1Yjc5YjQ5MDQ1MTRhMGZjNzIzMmVhODlhOWU4YzZhYzYwZWUzZGJhMWI1OTc1Yjc3NTUxMjczMzhhNCJ9fX0
     bounciness: 0.0
-    air-resistance: 0.1
+    air-resistance: 0.06
     water-resistance: 0.9
     fuse-time: -1
     despawn-time: 20
@@ -54,11 +55,12 @@ grenades:
     blast-radius: 0.0
     smoke-radius: 0.0
     fire-radius: 4.0
-    destruction-radius: 0.0
-    weight: 30.0
+    destruction-radius: 4.0
+    weight: 40.0
     gravity: true
     smoke-trail: true
     explode-on-contact: true
+    beeps: false
     recipe:
       is-shaped: false
       amount: 2
@@ -75,11 +77,11 @@ grenades:
       - '&bHold Shift: &7Wait until unshifting to throw'
     texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvY2IyYjVkNDhlNTc1Nzc1NjNhY2EzMTczNTUxOWNiNjIyMjE5YmMwNThiMWYzNDY0OGI2N2I4ZTcxYmMwZmEifX19
     bounciness: 0.2
-    air-resistance: 0.1
-    water-resistance: 0.9
+    air-resistance: 0.01
+    water-resistance: 0.7
     fuse-time: -1
     despawn-time: 8
-    direct-hit-damage: 4.0
+    direct-hit-damage: 1.0
     blast-radius: 0.0
     smoke-radius: 0.0
     fire-radius: 0.0
@@ -88,6 +90,7 @@ grenades:
     gravity: true
     smoke-trail: false
     explode-on-contact: false
+    beeps: false
     recipe:
       is-shaped: false
       amount: 4
@@ -102,8 +105,8 @@ grenades:
       - '&bHold Shift: &7Wait until unshifting to throw'
     texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTg0YTY4ZmQ3YjYyOGQzMDk2NjdkYjdhNTU4NTViNTRhYmMyM2YzNTk1YmJlNDMyMTYyMTFiZTVmZTU3MDE0In19fQ
     bounciness: 0.2
-    air-resistance: 0.1
-    water-resistance: 0.9
+    air-resistance: 0.05
+    water-resistance: 0.8
     fuse-time: 5
     despawn-time: 30
     direct-hit-damage: 1.0
@@ -115,6 +118,7 @@ grenades:
     gravity: true
     smoke-trail: true
     explode-on-contact: false
+    beeps: false
     recipe:
       is-shaped: true
       amount: 2
@@ -127,6 +131,42 @@ grenades:
       3A: IRON_NUGGET
       3B: SUGAR
       3C: IRON_NUGGET
+  c4:
+    name: '&cC4'
+    lore:
+      - '&eReally blows stuff up. Detonates after 30 seconds.'
+      - ''
+      - '&bLeft Click: &7Underhand throw'
+      - '&bRight Click: &7Overhand throw'
+      - '&bHold Shift: &7Wait until unshifting to throw'
+    texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGRhMzMyYWJkZTMzM2ExNWE2YzZmY2ZlY2E4M2YwMTU5ZWE5NGI2OGU4ZjI3NGJhZmMwNDg5MmI2ZGJmYyJ9fX0
+    bounciness: 0.05
+    air-resistance: 0.01
+    water-resistance: 0.8
+    fuse-time: 30
+    despawn-time: 35
+    direct-hit-damage: 2.0
+    blast-radius: 16.0
+    smoke-radius: 0.0
+    fire-radius: 8.0
+    destruction-radius: 9.0
+    weight: 100.0
+    gravity: true
+    smoke-trail: true
+    explode-on-contact: false
+    beeps: true
+    recipe:
+      is-shaped: true
+      amount: 1
+      1A: CLAY_BALL
+      1B: SLIME_BALL
+      1C: CLAY_BALL
+      2A: TNT
+      2B: TNT
+      2C: TNT
+      3A: CLAY_BALL
+      3B: SLIME_BALL
+      3C: CLAY_BALL
 
 
 
