@@ -19,7 +19,7 @@ grenades:
     blast-radius: 3.75
     smoke-radius: 0.0
     fire-radius: 0.0
-    destruction-radius: 0.25
+    destruction-radius: 0.5
     weight: 14.0
     gravity: true
     smoke-trail: true
@@ -55,7 +55,7 @@ grenades:
     blast-radius: 0.0
     smoke-radius: 0.0
     fire-radius: 4.0
-    destruction-radius: 4.0
+    destruction-radius: 0.0
     weight: 40.0
     gravity: true
     smoke-trail: true
@@ -143,13 +143,13 @@ grenades:
     bounciness: 0.05
     air-resistance: 0.01
     water-resistance: 0.8
-    fuse-time: 30
-    despawn-time: 35
+    fuse-time: 40
+    despawn-time: 41
     direct-hit-damage: 2.0
     blast-radius: 16.0
     smoke-radius: 0.0
-    fire-radius: 8.0
-    destruction-radius: 9.0
+    fire-radius: 12.0
+    destruction-radius: 11.0
     weight: 100.0
     gravity: true
     smoke-trail: true

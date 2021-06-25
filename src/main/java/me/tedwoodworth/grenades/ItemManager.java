@@ -49,7 +49,7 @@ public class ItemManager {
         return text;
     }
 
-    public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float damageRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, boolean beeps, List<String> lore) {
+    public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float destructionRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, boolean beeps, List<String> lore) {
         var grenade = new ItemStack(Material.PLAYER_HEAD); // create item
 
         if (!texture.isEmpty()) { // set texture
@@ -85,7 +85,7 @@ public class ItemManager {
         container.set(Constants.BLAST_RADIUS_KEY, PersistentDataType.FLOAT, blastRadius);
         container.set(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT, smokeRadius);
         container.set(Constants.FIRE_RADIUS_KEY, PersistentDataType.FLOAT, fireRadius);
-        container.set(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT, damageRadius);
+        container.set(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT, destructionRadius);
         container.set(Constants.WEIGHT_KEY, PersistentDataType.DOUBLE, weight);
         container.set(Constants.GRAVITY_KEY, BooleanPersistentDataType.instance, hasGravity);
         container.set(Constants.SMOKE_TRAIL_KEY, BooleanPersistentDataType.instance, hasSmokeTrail);

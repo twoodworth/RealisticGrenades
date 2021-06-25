@@ -61,7 +61,7 @@ public class EventListener implements Listener {
                 location.getWorld().spawnParticle(Particle.LAVA, location, 3, Math.random(), Math.random(), Math.random());
             }
             int delay = 0;
-            for (double h = radius / 5.0; h <= radius; h += radius / 5.0) {
+            for (double h = radius / 5.0; h < radius; h += radius / 5.0) {
                 var nearby = source.getNearbyEntities(h, h, h);
                 for (var entity : nearby) {
                     if (entity instanceof LivingEntity) {
@@ -88,8 +88,8 @@ public class EventListener implements Listener {
 
                         var nLoc = new Location(location.getWorld(), tempX, tempY, tempZ);
                         var block = nLoc.getBlock();
-                        if (!block.getType().isAir()) continue;
-                        location.getWorld().spawnParticle(Particle.LAVA, nLoc, 2, Math.random(), Math.random(), Math.random());
+                        if (!block.getType().isAir() || nLoc.distanceSquared(location) > Math.pow(finalH, 2)) continue;
+                        location.getWorld().spawnParticle(Particle.LAVA, nLoc, 1, Math.random(), Math.random(), Math.random());
                         int j = 0;
                         while (j < r && block.getLocation().getY() > 0 && block.getRelative(BlockFace.DOWN).getType().isAir()) {
                             block = block.getRelative(BlockFace.DOWN);
@@ -99,7 +99,7 @@ public class EventListener implements Listener {
                     }
                     location.getWorld().playSound(location, Sound.BLOCK_FIRE_AMBIENT, 1, 1);
                 }, delay);
-                delay += 5L;
+                delay += 3L;
             }
             return true;
         }
@@ -195,7 +195,7 @@ public class EventListener implements Listener {
             if (blastRadius > 0F) item.getWorld().createExplosion(item.getLocation(), blastRadius, false, false, item);
             if (destructionRadius > 0F)
                 item.getWorld().createExplosion(item.getLocation(), destructionRadius, false, true, item);
-            if (fireRadius > 0F) createFireExplosion(item.getLocation(), fireRadius, item);
+            if (fireRadius > 0F && primeEvent.getFire()) createFireExplosion(item.getLocation(), fireRadius, item);
             if (smokeRadius > 0F) createSmokeExplosion(item.getLocation(), smokeRadius, item);
         }
         grenadeSet.remove(item);
@@ -207,7 +207,6 @@ public class EventListener implements Listener {
         var stack = item.getItemStack();
         var remainingTime = manager.getRemainingTime(stack);
         var remainingDespawnTime = manager.getRemainingDespawnTime(stack);
-        var initialTime = manager.getInitialTime(stack);
         if (remainingTime == 0) {
             hitList.remove(item);
             explodeGrenade(item);
@@ -219,41 +218,43 @@ public class EventListener implements Listener {
             return;
         }
         var location = item.getLocation();
-        if (manager.hasSmokeTrail(stack) && remainingTime % 2 == 0 && initialTime - remainingTime > 2) {
+        var velocity = item.getVelocity();
+        if (manager.hasSmokeTrail(stack)) {
             var location2 = location.clone();
             location2.setY(item.getLocation().getY() + 0.25);
+            item.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, location2, 1, 0.05, 0.05, 0.05, 0);
+            location2.subtract(velocity.clone().multiply(0.5));
             item.getWorld().spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, location2, 1, 0.05, 0.05, 0.05, 0);
         }
 
 
         if (manager.beeps(stack)) {
-            if (remainingTime < 20 && remainingTime % 2 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f + (20 - remainingTime) / 120.0f);
-            } else if (remainingTime < 81 && remainingTime % 5 == 0) {
+            if (remainingTime <= 40 && remainingTime % 2 == 0) {
+                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 0.5f + (40 - remainingTime) / 26.666666f);
+            } else if (remainingTime <= 80 && remainingTime % 4 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 201 && remainingTime % 10 == 0) {
+            } else if (remainingTime <= 160 && remainingTime % 8 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 51 && remainingTime % 8 == 0) {
+            } else if (remainingTime <= 320 && remainingTime % 16 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 241 && remainingTime % 20 == 0) {
+            } else if (remainingTime <= 480 && remainingTime % 32 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 421 && remainingTime % 30 == 0) {
+            } else if (remainingTime <= 640 && remainingTime % 64 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 601 && remainingTime % 60 == 0) {
+            } else if (remainingTime <= 1280 && remainingTime % 128 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 1001 && remainingTime % 100 == 0) {
+            } else if (remainingTime <= 2560 && remainingTime % 256 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 2501 && remainingTime % 250 == 0) {
+            } else if (remainingTime < 5120 && remainingTime % 512 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime < 5001 && remainingTime % 500 == 0) {
+            } else if (remainingTime < 10240 && remainingTime % 1024 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
-            } else if (remainingTime % 2500 == 0) {
+            } else if (remainingTime % 4096 == 0) {
                 item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
             }
         }
 
 
-        var velocity = item.getVelocity();
         var calculations = ConfigManager.CALCULATIONS_PER_TICK;
 
 
@@ -515,8 +516,21 @@ public class EventListener implements Listener {
         else
             loc.setY(loc.getY() - 0.6);
 
-        velocity.add(player.getVelocity());
-        loc.add(velocity);
+
+        var pBox = player.getBoundingBox();
+        var interval = velocity.clone().normalize().multiply(0.25);
+        while (true) {
+            var block = loc.getBlock();
+            if (!block.isPassable() && !block.isLiquid()) break; // if loc is solid block, stop
+
+            var gBox = new BoundingBox(loc.getX() - 0.125, loc.getY(), loc.getZ() - 0.125, loc.getX() + 0.125, loc.getY() + 0.25, loc.getZ() + 0.125);
+            loc.add(interval);
+            if (!pBox.contains(gBox)) {
+                loc.add(interval);
+                break;
+            }
+        }
+
         velocity.setY(velocity.getY() + (Math.random() - 0.5) * 0.025);
         velocity.setX(velocity.getX() + (Math.random() - 0.5) * 0.025);
         velocity.setZ(velocity.getZ() + (Math.random() - 0.5) * 0.025);
