@@ -138,7 +138,7 @@ public class EventListener implements Listener {
     }
 
     private void createSmoke(Entity source, float radius, int i, final int max) {
-        var count = ConfigManager.SMOKE_THICKNESS * 0.1 * Math.pow(radius * 2, 3);
+        var count = ConfigManager.SMOKE_THICKNESS * 0.8 * Math.pow(radius, 3);
 
         var loc = source.getLocation();
         var x = loc.getX();
