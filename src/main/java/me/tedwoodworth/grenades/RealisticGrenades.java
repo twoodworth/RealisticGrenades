@@ -10,6 +10,12 @@ public class RealisticGrenades extends JavaPlugin {
         instance = this;
         Bukkit.getPluginManager().registerEvents(new EventListener(), this);
         ConfigManager.getInstance().loadConfig();
+
+        int pluginId = 12043;
+        Metrics metrics = new Metrics(this, pluginId);
+
+        // Optional: Add custom charts
+        metrics.addCustomChart(new Metrics.SimplePie("chart_id", () -> "RealisticGrenades"));
     }
 
     @Override
