@@ -1,8 +1,36 @@
 name: RealisticGrenades
 main: me.tedwoodworth.grenades.RealisticGrenades
-version: 0.1.0
+version: 0.2.0
 description: This plugin adds realistic grenades into the game.
 author: Tedsworth
 
 api-version: 1.17
 depend: [ ]
+
+commands:
+  grenades:
+    description: Commands for the RealisticGrenades plugin.
+    usage: "Usage: /grenades"
+    permission: "realisticgrenades.grenades"
+  rg:
+    description: Admin commands for the RealisticGrenades plugin.
+    usage: "Usage: /rg <command>"
+
+permissions:
+  realisticgrenades.*:
+    description: Gives you to access all RealisticGrenades commands.
+    default: op
+    children:
+      realisticgrenades.grenades: true
+      realisticgrenades.admin.*: true
+  realisticgrenades.admin.*:
+    default: op
+    description: Gives you access to all RealisticGrenades admin commands.
+    children:
+      realisticgrenades.admin.give: true
+  realisticgrenades.grenades:
+    default: true
+    description: Gives you access to /rg recipes
+  realisticgrenades.admin.give:
+    default: op
+    description: Gives you access to /rg give

@@ -98,7 +98,13 @@ public class ItemManager {
     }
 
     public ItemStack getGrenade(String id) {
-        return grenades.get(id).clone();
+        var grenade = grenades.get(id);
+        if (grenade == null) return null;
+        return grenade.clone();
+    }
+
+    public List<String> getGrenadeIDs() {
+        return new ArrayList<>(grenades.keySet());
     }
 
     public int getFuseTime(ItemStack item) {

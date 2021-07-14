@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.ShapelessRecipe;
 
@@ -16,6 +17,8 @@ public class ConfigManager {
     private final FileConfiguration config;
     public static int CALCULATIONS_PER_TICK;
     public static double SMOKE_THICKNESS;
+
+    public static final HashMap<String, Recipe> grenadeRecipes = new HashMap<>();
 
     public static ConfigManager getInstance() {
         if (instance == null) {
@@ -271,7 +274,6 @@ public class ConfigManager {
                         }
                     }
                 }
-
                 StringBuilder string1 = new StringBuilder();
                 StringBuilder string2 = new StringBuilder();
                 StringBuilder string3 = new StringBuilder();
@@ -314,6 +316,7 @@ public class ConfigManager {
                     recipe.setIngredient(ingredientMap.get(ingredient), ingredient);
                 }
                 Bukkit.getServer().addRecipe(recipe);
+                grenadeRecipes.put(grenadeID, recipe);
             } else {
                 var recipe = new ShapelessRecipe(new NamespacedKey(plugin, grenadeID + "_recipe"), grenade);
                 var ingredientMap = new HashMap<Material, Integer>();
@@ -333,6 +336,7 @@ public class ConfigManager {
                     recipe.addIngredient(ingredientMap.get(ingredient), ingredient);
                 }
                 Bukkit.getServer().addRecipe(recipe);
+                grenadeRecipes.put(grenadeID, recipe);
             }
         }
     }
