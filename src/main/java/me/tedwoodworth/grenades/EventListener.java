@@ -287,6 +287,10 @@ public class EventListener implements Listener {
             nearbyY.remove(item);
             nearbyZ.remove(item);
 
+            nearbyX.remove(getGrenadeThrower(item));
+            nearbyY.remove(getGrenadeThrower(item));
+            nearbyZ.remove(getGrenadeThrower(item));
+
             var entityX = nearbyX.size() > 0;
             var entityY = nearbyY.size() > 0;
             var entityZ = nearbyZ.size() > 0;
