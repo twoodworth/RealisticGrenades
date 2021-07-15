@@ -330,7 +330,7 @@ public class EventListener implements Listener {
                     nZcollide = true;
                 }
             }
-             if (entityX) {
+            if (entityX) {
                 var entity = nearbyX.toArray()[0];
                 if (!hitList.get(item).contains(entity)) {
                     if (entity instanceof LivingEntity) {
@@ -693,6 +693,7 @@ public class EventListener implements Listener {
     @EventHandler
     private void onPlayerJoin(PlayerJoinEvent event) {
         var player = event.getPlayer();
+        plugin.updateCheck(player); // send message if Op & new update is available
         var inv = player.getInventory();
         var slots = inv.getSize();
         for (int i = 0; i < slots; i++) {
