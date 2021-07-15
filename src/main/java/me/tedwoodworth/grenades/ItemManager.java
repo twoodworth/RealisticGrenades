@@ -20,7 +20,6 @@ public class ItemManager {
     }
 
     private ItemManager() {
-        // frag grenade
     }
 
     private String colorizeText(String text) {
@@ -272,6 +271,13 @@ public class ItemManager {
         if (meta == null) return false;
         var container = meta.getPersistentDataContainer();
         return container.has(Constants.GRENADE_ID_KEY, PersistentDataType.STRING);
+    }
+
+    public String getID(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return null;
+        var container = meta.getPersistentDataContainer();
+        return container.get(Constants.GRENADE_ID_KEY, PersistentDataType.STRING);
     }
 
     public boolean isPrimed(ItemStack item) {

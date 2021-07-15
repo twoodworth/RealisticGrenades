@@ -9,9 +9,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -328,7 +330,7 @@ public class EventListener implements Listener {
                     nZcollide = true;
                 }
             }
-            if (entityX) {
+             if (entityX) {
                 var entity = nearbyX.toArray()[0];
                 if (!hitList.get(item).contains(entity)) {
                     if (entity instanceof LivingEntity) {
@@ -362,6 +364,7 @@ public class EventListener implements Listener {
                 interval.setX(-bounciness * interval.getX());
                 collides = true;
             }
+
             if (entityY) {
                 var entity = nearbyY.toArray()[0];
                 if (!hitList.get(item).contains(entity)) {
@@ -396,6 +399,7 @@ public class EventListener implements Listener {
                 interval.setY(-bounciness * interval.getY());
                 collides = true;
             }
+
             if (entityZ) {
                 var entity = nearbyZ.toArray()[0];
                 if (!hitList.get(item).contains(entity)) {
@@ -676,7 +680,7 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    private void onDamage(EntityDamageEvent event) {
+    private void onEntityCombust(EntityCombustEvent event) {
         var entity = event.getEntity();
         if (entity instanceof Item) {
             var item = (Item) entity;
@@ -687,12 +691,78 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    private void onEntityCombust(EntityCombustEvent event) {
-        var entity = event.getEntity();
-        if (entity instanceof Item) {
-            var item = (Item) entity;
-            if (manager.isPrimed(item.getItemStack())) {
-                event.setCancelled(true);
+    private void onPlayerJoin(PlayerJoinEvent event) {
+        var player = event.getPlayer();
+        var inv = player.getInventory();
+        var slots = inv.getSize();
+        for (int i = 0; i < slots; i++) {
+            var content = inv.getItem(i);
+            if (content != null && manager.isGrenade(content)) {
+                var id = manager.getID(content);
+                var grenade = manager.getGrenade(id);
+                if (grenade != null && !grenade.isSimilar(content)) {
+                    grenade.setAmount(content.getAmount());
+                    inv.setItem(i, grenade);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    private void onPickupItem(InventoryPickupItemEvent event) {
+        var item = event.getItem();
+        var stack = item.getItemStack();
+        if (manager.isGrenade(stack)) {
+            var id = manager.getID(stack);
+            var grenade = manager.getGrenade(id);
+            if (grenade != null && !grenade.isSimilar(stack)) {
+                grenade.setAmount(stack.getAmount());
+                item.setItemStack(grenade);
+            }
+        }
+    }
+
+    @EventHandler
+    private void onPickupItem(EntityPickupItemEvent event) {
+        var item = event.getItem();
+        var stack = item.getItemStack();
+        if (manager.isGrenade(stack)) {
+            var id = manager.getID(stack);
+            var grenade = manager.getGrenade(id);
+            if (grenade != null && !grenade.isSimilar(stack)) {
+                grenade.setAmount(stack.getAmount());
+                item.setItemStack(grenade);
+            }
+        }
+    }
+
+    @EventHandler
+    private void onEntityDropItem(EntityDropItemEvent event) {
+        var item = event.getItemDrop();
+        var stack = item.getItemStack();
+        if (manager.isGrenade(stack)) {
+            var id = manager.getID(stack);
+            var grenade = manager.getGrenade(id);
+            if (grenade != null && !grenade.isSimilar(stack)) {
+                grenade.setAmount(stack.getAmount());
+                item.setItemStack(grenade);
+            }
+        }
+    }
+
+    @EventHandler
+    private void onInventoryOpen(InventoryOpenEvent event) {
+        var inv = event.getInventory();
+        var slots = inv.getSize();
+        for (int i = 0; i < slots; i++) {
+            var content = inv.getItem(i);
+            if (content != null && manager.isGrenade(content)) {
+                var id = manager.getID(content);
+                var grenade = manager.getGrenade(id);
+                if (grenade != null && !grenade.isSimilar(content)) {
+                    grenade.setAmount(content.getAmount());
+                    inv.setItem(i, grenade);
+                }
             }
         }
     }
