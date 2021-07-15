@@ -194,10 +194,10 @@ public class EventListener implements Listener {
             fireRadius = Math.min(fireRadius, primeEvent.getRadius());
             destructionRadius = Math.min(destructionRadius, primeEvent.getRadius());
             smokeRadius = Math.min(smokeRadius, primeEvent.getRadius());
-            if (blastRadius > 0F) item.getWorld().createExplosion(item.getLocation(), blastRadius, false, false, item);
+            if (blastRadius > 0F) item.getWorld().createExplosion(item.getLocation(), blastRadius / 2.0F, false, false, item);
             if (destructionRadius > 0F)
                 item.getWorld().createExplosion(item.getLocation(), destructionRadius, false, true, item);
-            if (fireRadius > 0F && primeEvent.getFire()) createFireExplosion(item.getLocation(), fireRadius, item);
+            if (fireRadius > 0F && primeEvent.getFire()) createFireExplosion(item.getLocation(), fireRadius + 2.0F, item);
             if (smokeRadius > 0F) createSmokeExplosion(item.getLocation(), smokeRadius, item);
         }
         grenadeSet.remove(item);
