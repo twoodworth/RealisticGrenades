@@ -194,10 +194,12 @@ public class EventListener implements Listener {
             fireRadius = Math.min(fireRadius, primeEvent.getRadius());
             destructionRadius = Math.min(destructionRadius, primeEvent.getRadius());
             smokeRadius = Math.min(smokeRadius, primeEvent.getRadius());
-            if (blastRadius > 0F) item.getWorld().createExplosion(item.getLocation(), blastRadius / 2.0F, false, false, item);
+            if (blastRadius > 0F)
+                item.getWorld().createExplosion(item.getLocation(), blastRadius / 2.0F, false, false, item);
             if (destructionRadius > 0F)
-                item.getWorld().createExplosion(item.getLocation(), destructionRadius, false, true, item);
-            if (fireRadius > 0F && primeEvent.getFire()) createFireExplosion(item.getLocation(), fireRadius + 2.0F, item);
+                item.getWorld().createExplosion(item.getLocation(), destructionRadius / 1.7333333333F, false, true, item);
+            if (fireRadius > 0F && primeEvent.getFire())
+                createFireExplosion(item.getLocation(), fireRadius + 2.0F, item);
             if (smokeRadius > 0F) createSmokeExplosion(item.getLocation(), smokeRadius, item);
         }
         grenadeSet.remove(item);
@@ -231,34 +233,34 @@ public class EventListener implements Listener {
 
 
         if (manager.beeps(stack)) {
+            var world = item.getWorld();
+            var radius = 2f * Math.max(Math.max(manager.getSmokeRadius(stack), manager.getFireRadius(stack)), Math.max(manager.getBlastRadius(stack), manager.getDestructionRadius(stack)));
             if (remainingTime <= 40 && remainingTime % 2 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 0.5f + (40 - remainingTime) / 26.666666f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 0.5f + (40 - remainingTime) / 26.666666f);
             } else if (remainingTime <= 80 && remainingTime % 4 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime <= 160 && remainingTime % 8 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime <= 320 && remainingTime % 16 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime <= 480 && remainingTime % 32 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime <= 640 && remainingTime % 64 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime <= 1280 && remainingTime % 128 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime <= 2560 && remainingTime % 256 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime < 5120 && remainingTime % 512 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime < 10240 && remainingTime % 1024 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             } else if (remainingTime % 4096 == 0) {
-                item.getWorld().playSound(item.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1, 1f);
+                playSound(world, location, Sound.BLOCK_NOTE_BLOCK_HAT, 1, radius, 1f);
             }
         }
 
-
         var calculations = ConfigManager.CALCULATIONS_PER_TICK;
-
 
         var interval = velocity.clone().multiply(1.0 / calculations);
         var curLoc = location.clone();
@@ -764,6 +766,21 @@ public class EventListener implements Listener {
                     grenade.setAmount(content.getAmount());
                     inv.setItem(i, grenade);
                 }
+            }
+        }
+    }
+
+    private void playSound(World world, Location location, Sound sound, float volume, float radius, float pitch) {
+        var nearby = world.getNearbyEntities(location, radius, radius, radius);
+        for (var e : nearby) {
+            if (e instanceof Player) {
+                var loc = e.getLocation();
+                var dist = loc.distance(location);
+                var vol = volume * (float) (dist / Math.max(0.00001, radius));
+                var vector = location.toVector().subtract(loc.toVector());
+                loc.add(vector.normalize().multiply(0.1));
+
+                ((Player) e).playSound(loc, sound, vol, pitch);
             }
         }
     }
