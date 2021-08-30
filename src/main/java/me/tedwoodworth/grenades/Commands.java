@@ -19,16 +19,16 @@ public class Commands implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (command.getName().equalsIgnoreCase("grenades")) {
             grenades(sender);
-        } else if (command.getName().equalsIgnoreCase("rg")) {
+        } else if (command.getName().equalsIgnoreCase("realisticGrenades")) {
             if (args.length == 0) {
-                rg(sender);
+                realisticGrenades(sender);
             } else if (args[0].equalsIgnoreCase("give")) {
                 if (args.length == 3) {
                     give(sender, args[1], args[2], "64");
                 } else if (args.length == 4) {
                     give(sender, args[1], args[2], args[3]);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Incorrect usage, try: /rg give <player> <grenade id> <amount>");
+                    sender.sendMessage(ChatColor.RED + "Incorrect usage, try: /realisticGrenades give <player> <grenade id> <amount>");
                 }
             }
         }
@@ -75,10 +75,10 @@ public class Commands implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void rg(CommandSender sender) {
+    private void realisticGrenades(CommandSender sender) {
         var lines = new ArrayList<String>();
         if (sender.hasPermission("realisticgrenades.admin.give")) {
-            lines.add(ChatColor.YELLOW + "/rg give <player> <grenade id> <amount>");
+            lines.add(ChatColor.YELLOW + "/realisticGrenades give <player> <grenade id> <amount>");
         }
         if (lines.size() == 0) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
@@ -131,7 +131,6 @@ public class Commands implements CommandExecutor, TabCompleter {
             sender.sendMessage("" + ChatColor.RED + amt + " is too many. Must be at most 64.");
             return;
         }
-
         grenade.setAmount(amt);
         var leftovers = player.getInventory().addItem(grenade);
         for (var i : leftovers.keySet()) {

@@ -30,7 +30,7 @@ public class RealisticGrenades extends JavaPlugin {
         GrenadeGui.getGrenadeGui();
 
         // register commands
-        Commands.register(Objects.requireNonNull(getCommand("rg")));
+        Commands.register(Objects.requireNonNull(getCommand("realisticGrenades")));
         Commands.register(Objects.requireNonNull(getCommand("grenades")));
 
         // check for updates
