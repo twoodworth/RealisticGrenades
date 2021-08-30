@@ -37,7 +37,7 @@ public class Commands implements CommandExecutor, TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        if (command.getName().equalsIgnoreCase("rg")) {
+        if (command.getName().equalsIgnoreCase("realisticgrenades")) {
             if (args.length == 0) {
                 return null;
             } else if (args.length == 1) {

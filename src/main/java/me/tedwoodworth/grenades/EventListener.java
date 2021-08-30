@@ -7,6 +7,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
@@ -56,7 +58,6 @@ public class EventListener implements Listener {
         var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
         Bukkit.getPluginManager().callEvent(event);
         if (!event.isCancelled()) {
-
             location.getWorld().playSound(location, Sound.BLOCK_GLASS_BREAK, 1, 1);
             location.getWorld().playSound(location, Sound.ITEM_FIRECHARGE_USE, 1, 1);
             for (int i = 0; i < 30; i++) {
@@ -67,7 +68,12 @@ public class EventListener implements Listener {
                 var nearby = source.getNearbyEntities(h, h, h);
                 for (var entity : nearby) {
                     if (entity instanceof LivingEntity) {
-                        (entity).setFireTicks((int) Math.max(0, 20 * (Math.pow(h, 2) - location.distanceSquared(entity.getLocation()))));
+                        var t = (int) Math.max(0, 20 * (Math.pow(h, 2) - location.distanceSquared(entity.getLocation())));
+                        var e = new EntityCombustEvent(entity, t);
+                        Bukkit.getPluginManager().callEvent(e);
+                        if (!e.isCancelled()) {
+                            e.getEntity().setFireTicks(e.getDuration());
+                        }
                     }
                 }
                 double finalH = h;
@@ -97,7 +103,15 @@ public class EventListener implements Listener {
                             block = block.getRelative(BlockFace.DOWN);
                             j++;
                         }
-                        block.setType(Material.FIRE);
+                        var state = block.getState();
+                        state.setType(Material.FIRE);
+                        var e1 = new BlockSpreadEvent(block, block.getRelative(BlockFace.EAST), state);
+                        var e2 = new BlockIgniteEvent(block, BlockIgniteEvent.IgniteCause.SPREAD, source.getLocation().getBlock());
+                        Bukkit.getPluginManager().callEvent(e1);
+                        Bukkit.getPluginManager().callEvent(e2);
+                        if (!e1.isCancelled() && !e2.isCancelled()) {
+                            e1.getNewState().update(true);
+                        }
                     }
                     location.getWorld().playSound(location, Sound.BLOCK_FIRE_AMBIENT, 1, 1);
                 }, delay);
@@ -191,9 +205,13 @@ public class EventListener implements Listener {
         Bukkit.getPluginManager().callEvent(primeEvent);
         if (!primeEvent.isCancelled()) {
             blastRadius = Math.min(blastRadius, primeEvent.getRadius());
+            System.out.println("Blast:" + blastRadius);
             fireRadius = Math.min(fireRadius, primeEvent.getRadius());
+            System.out.println("Fire:" + fireRadius);
             destructionRadius = Math.min(destructionRadius, primeEvent.getRadius());
+            System.out.println("Destruction:" + destructionRadius);
             smokeRadius = Math.min(smokeRadius, primeEvent.getRadius());
+            System.out.println("Smoke:" + smokeRadius);
             if (blastRadius > 0F)
                 item.getWorld().createExplosion(item.getLocation(), blastRadius / 2.0F, false, false, item);
             if (destructionRadius > 0F)
