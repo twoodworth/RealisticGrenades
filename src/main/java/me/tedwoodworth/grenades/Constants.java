@@ -13,6 +13,7 @@ public class Constants {
     public static final NamespacedKey SMOKE_RADIUS_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "smoke_radius");
     public static final NamespacedKey FIRE_RADIUS_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "fire_radius");
     public static final NamespacedKey DESTRUCTION_RADIUS_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "destruction_radius");
+    public static final NamespacedKey FLASH_RADIUS_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "flash_radius");
     public static final NamespacedKey WEIGHT_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "weight");
     public static final NamespacedKey GRAVITY_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "gravity");
     public static final NamespacedKey SMOKE_TRAIL_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "smoke_trail");

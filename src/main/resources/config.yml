@@ -20,6 +20,7 @@ grenades:
     smoke-radius: 0.0
     fire-radius: 0.0
     destruction-radius: 0.5
+    flash-radius: 0.0
     weight: 14.0
     gravity: true
     smoke-trail: true
@@ -56,6 +57,7 @@ grenades:
     smoke-radius: 0.0
     fire-radius: 4.0
     destruction-radius: 0.0
+    flash-radius: 0.0
     weight: 40.0
     gravity: true
     smoke-trail: true
@@ -86,6 +88,7 @@ grenades:
     smoke-radius: 0.0
     fire-radius: 0.0
     destruction-radius: 0.0
+    flash-radius: 0.0
     weight: 9.0
     gravity: true
     smoke-trail: false
@@ -114,6 +117,7 @@ grenades:
     smoke-radius: 6.0
     fire-radius: 0.0
     destruction-radius: 0.0
+    flash-radius: 0.0
     weight: 12.0
     gravity: true
     smoke-trail: true
@@ -150,6 +154,7 @@ grenades:
     smoke-radius: 0.0
     fire-radius: 7.0
     destruction-radius: 13.0
+    flash-radius: 0.0
     weight: 100.0
     gravity: true
     smoke-trail: true
@@ -167,6 +172,43 @@ grenades:
       3A: CLAY_BALL
       3B: SLIME_BALL
       3C: CLAY_BALL
+  flashbang:
+    name: '&eFlashbang'
+    lore:
+      - '&Blinds any nearby player that sees the explosion.'
+      - ''
+      - '&bLeft Click: &7Underhand throw'
+      - '&bRight Click: &7Overhand throw'
+      - '&bHold Shift: &7Wait until unshifting to throw'
+    texture: eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDU0MjU1Yjg0NmYxNDRiOTNiYzVmOWI3NTQ2ZTBjMjRiM2ExNDY2MDI0NjQzNjEwZDljNWQ2YmQ0YzhlNSJ9fX0
+    bounciness: 0.2
+    air-resistance: 0.05
+    water-resistance: 0.8
+    fuse-time: 5
+    despawn-time: 30
+    direct-hit-damage: 1.0
+    blast-radius: 0.0
+    smoke-radius: 0.0
+    fire-radius: 0.0
+    destruction-radius: 0.0
+    flash-radius: 24.0
+    weight: 12.0
+    gravity: true
+    smoke-trail: true
+    explode-on-contact: false
+    beeps: false
+    recipe:
+      is-shaped: true
+      amount: 2
+      1A: IRON_NUGGET
+      1B: REDSTONE
+      1C: IRON_NUGGET
+      2A: GLOWSTONE_DUST
+      2B: GUNPOWDER
+      2C: GLOWSTONE_DUST
+      3A: IRON_NUGGET
+      3B: GLOWSTONE_DUST
+      3C: IRON_NUGGET
 
 
 

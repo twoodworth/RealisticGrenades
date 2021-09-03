@@ -1,5 +1,6 @@
 package me.tedwoodworth.grenades;
 
+import com.google.common.collect.ImmutableMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -68,125 +69,176 @@ public class ConfigManager {
 
             var name = section.getString("name");
             if (name == null) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'name' setting in the config.");
-                continue;
+                name = "Unnamed Grenade";
+                section.set("name", name);
             }
 
             var lore = section.getStringList("lore");
 
             var texture = section.getString("texture");
             if (texture == null) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'texture' setting in the config.");
-                continue;
+                texture = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvN2M2MDNjNzk1NjAzMTk5OTZkNjM5NDEyOGI0OWZlYzc2NTBjZjg2N2ExZTQ4ZmI4MGM2MDQzZTc3MGRkNzFiZCJ9fX0";
+                section.set("texture", texture);
             }
 
+            double bounciness;
             if (!section.contains("bounciness")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'bounciness' setting in the config.");
-                continue;
+                bounciness = 0.0;
+                section.set("bounciness", bounciness);
+            } else {
+                bounciness = section.getDouble("bounciness");
             }
-            var bounciness = section.getDouble("bounciness");
 
-
+            double airResistance;
             if (!section.contains("air-resistance")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'air-resistance' setting in the config.");
-                continue;
+                airResistance = 0.0;
+                section.set("air-resistance", airResistance);
+            } else {
+                airResistance = section.getDouble("air-resistance");
             }
-            var airResistance = section.getDouble("air-resistance");
 
+            double waterResistance;
             if (!section.contains("water-resistance")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'water-resistance' setting in the config.");
-                continue;
+                waterResistance = 0.0;
+                section.set("water-resistance", waterResistance);
+            } else {
+                waterResistance = section.getDouble("water-resistance");
             }
-            var waterResistance = section.getDouble("water-resistance");
 
+            int fuseTime;
             if (!section.contains("fuse-time")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'fuse-time' setting in the config.");
-                continue;
+                fuseTime = 10;
+                section.set("fuse-time", fuseTime);
+            } else {
+                fuseTime = section.getInt("fuse-time");
             }
-            var fuseTime = section.getInt("fuse-time");
 
+            int despawnTime;
             if (!section.contains("despawn-time")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'despawn-time' setting in the config.");
-                continue;
+                despawnTime = 15;
+                section.set("despawn-time", despawnTime);
+            } else {
+                despawnTime = section.getInt("despawn-time");
             }
-            var despawnTime = section.getInt("despawn-time");
 
+            double directHitDamage;
             if (!section.contains("direct-hit-damage")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'direct-hit-damage' setting in the config.");
-                continue;
+                directHitDamage = 0.0;
+                section.set("direct-hit-damage", directHitDamage);
+            } else {
+                directHitDamage = section.getDouble("direct-hit-damage");
             }
-            var directHitDamage = section.getDouble("direct-hit-damage");
 
+
+            float blastRadius;
             if (!section.contains("blast-radius")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'blast-radius' setting in the config.");
-                continue;
+                blastRadius = 0.0F;
+                section.set("blast-radius", blastRadius);
+            } else {
+                blastRadius = (float) section.getDouble("blast-radius");
             }
-            var blastRadius = (float) section.getDouble("blast-radius");
 
+            float smokeRadius;
             if (!section.contains("smoke-radius")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'smoke-radius' setting in the config.");
-                continue;
+                smokeRadius = 0.0F;
+                section.set("smoke-radius", smokeRadius);
+            } else {
+                smokeRadius = (float) section.getDouble("smoke-radius");
             }
-            var smokeRadius = (float) section.getDouble("smoke-radius");
 
+            float fireRadius;
             if (!section.contains("fire-radius")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'fire-radius' setting in the config.");
-                continue;
+                fireRadius = 0.0F;
+                section.set("fire-radius", fireRadius);
+            } else {
+                fireRadius = (float) section.getDouble("fire-radius");
             }
-            var fireRadius = (float) section.getDouble("fire-radius");
 
+            float destructionRadius;
             if (!section.contains("destruction-radius")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'destruction-radius' setting in the config.");
-                continue;
+                destructionRadius = 0.0F;
+                section.set("destruction-radius", destructionRadius);
+            } else {
+                destructionRadius = (float) section.getDouble("destruction-radius");
             }
-            var destructionRadius = (float) section.getDouble("destruction-radius");
 
+            float flashRadius;
+            if (!section.contains("flash-radius")) {
+                flashRadius = 0.0F;
+                section.set("flash-radius", flashRadius);
+            } else {
+                flashRadius = (float) section.getDouble("flash-radius");
+            }
+
+            double weight;
             if (!section.contains("weight")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'weight' setting in the config.");
-                continue;
+                weight = 0.0F;
+                section.set("weight", weight);
+            } else {
+                weight = section.getDouble("weight");
             }
-            var weight = section.getDouble("weight");
 
+            boolean hasGravity;
             if (!section.contains("gravity")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'gravity' setting in the config.");
-                continue;
+                hasGravity = true;
+                section.set("gravity", true);
+            } else {
+                hasGravity = section.getBoolean("gravity");
             }
-            var hasGravity = section.getBoolean("gravity");
 
+            boolean hasSmokeTrail;
             if (!section.contains("smoke-trail")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'smoke-trail' setting in the config.");
-                continue;
+                hasSmokeTrail = true;
+                section.set("smoke-trail", true);
+            } else {
+                hasSmokeTrail = section.getBoolean("smoke-trail");
             }
-            var hasSmokeTrail = section.getBoolean("smoke-trail");
 
+
+            boolean explodeOnContact;
             if (!section.contains("explode-on-contact")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'explode-on-contact' setting in the config.");
-                continue;
+                explodeOnContact = false;
+                section.set("explode-on-contact", false);
+            } else {
+                explodeOnContact = section.getBoolean("explode-on-contact");
             }
-            var explodeOnContact = section.getBoolean("explode-on-contact");
 
+            boolean beeps;
             if (!section.contains("beeps")) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'beeps' setting in the config.");
-                continue;
+                beeps = false;
+                section.set("beeps", false);
+            } else {
+                beeps = section.getBoolean("beeps");
             }
-            var beeps = section.getBoolean("beeps");
+
+
             var recipeSection = section.getConfigurationSection("recipe");
             if (recipeSection == null) {
-                System.out.println("[RealisticGrenades] Error: " + grenadeID + " is missing the 'recipe' setting in the config.");
-                continue;
+                recipeSection = section.createSection("recipe",
+                        ImmutableMap.of(
+                                "is-shaped", true,
+                                "amount", 1,
+                                "1A", "BEDROCK",
+                                "1B", "BEDROCK",
+                                "1C", "BEDROCK"
+                        ));
             }
 
+            boolean isShaped;
             if (!recipeSection.contains("is-shaped")) {
-                System.out.println("[RealisticGrenades] Error: The " + grenadeID + " recipe configuration is missing the 'is-shaped' setting.");
-                continue;
+                isShaped = false;
+                recipeSection.set("is-shaped", false);
+            } else {
+                isShaped = recipeSection.getBoolean("is-shaped");
             }
-            var isShaped = recipeSection.getBoolean("is-shaped");
 
+            int amount;
             if (!recipeSection.contains("amount")) {
-                System.out.println("[RealisticGrenades] Error: The " + grenadeID + " recipe configuration is missing the 'amount' setting.");
-                continue;
+                amount = 1;
+                recipeSection.set("amount", amount);
+            } else {
+                amount = recipeSection.getInt("amount");
             }
-            var amount = recipeSection.getInt("amount");
 
             var strIngredients = new String[9];
             strIngredients[0] = recipeSection.getString("1A");
@@ -246,6 +298,7 @@ public class ConfigManager {
                     smokeRadius,
                     fireRadius,
                     destructionRadius,
+                    flashRadius,
                     weight,
                     hasGravity,
                     hasSmokeTrail,
@@ -339,5 +392,6 @@ public class ConfigManager {
                 grenadeRecipes.put(grenadeID, recipe);
             }
         }
+        plugin.saveConfig();
     }
 }

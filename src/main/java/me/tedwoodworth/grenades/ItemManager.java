@@ -48,7 +48,7 @@ public class ItemManager {
         return text;
     }
 
-    public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float destructionRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, boolean beeps, List<String> lore) {
+    public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float destructionRadius, float flashRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, boolean beeps, List<String> lore) {
         var grenade = new ItemStack(Material.PLAYER_HEAD); // create item
 
         if (!texture.isEmpty()) { // set texture
@@ -85,6 +85,7 @@ public class ItemManager {
         container.set(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT, smokeRadius);
         container.set(Constants.FIRE_RADIUS_KEY, PersistentDataType.FLOAT, fireRadius);
         container.set(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT, destructionRadius);
+        container.set(Constants.FLASH_RADIUS_KEY, PersistentDataType.FLOAT, flashRadius);
         container.set(Constants.WEIGHT_KEY, PersistentDataType.DOUBLE, weight);
         container.set(Constants.GRAVITY_KEY, BooleanPersistentDataType.instance, hasGravity);
         container.set(Constants.SMOKE_TRAIL_KEY, BooleanPersistentDataType.instance, hasSmokeTrail);
@@ -216,6 +217,14 @@ public class ItemManager {
         var container = meta.getPersistentDataContainer();
         if (!container.has(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT)) return 0.0F;
         return container.get(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT);
+    }
+
+    public float getFlashRadius(ItemStack item) {
+        var meta = item.getItemMeta();
+        if (meta == null) return 0.0F;
+        var container = meta.getPersistentDataContainer();
+        if (!container.has(Constants.FLASH_RADIUS_KEY, PersistentDataType.FLOAT)) return 0.0F;
+        return container.get(Constants.FLASH_RADIUS_KEY, PersistentDataType.FLOAT);
     }
 
     public boolean hasSmokeTrail(ItemStack item) {

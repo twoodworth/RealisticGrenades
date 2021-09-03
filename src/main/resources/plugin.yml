@@ -1,6 +1,6 @@
 name: RealisticGrenades
 main: me.tedwoodworth.grenades.RealisticGrenades
-version: 0.2.4
+version: 0.3.0
 description: This plugin adds realistic grenades into the game.
 author: Tedsworth
 
@@ -12,6 +12,7 @@ commands:
     description: Commands for the RealisticGrenades plugin.
     usage: "Usage: /grenades"
     permission: "realisticgrenades.grenades"
+    aliases: [grenade]
   realisticGrenades:
     description: Admin commands for the RealisticGrenades plugin.
     usage: "Usage: /realisticGrenades <command>"

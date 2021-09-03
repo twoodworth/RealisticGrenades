@@ -122,6 +122,64 @@ public class EventListener implements Listener {
         return false;
     }
 
+    private boolean createFlashExplosion(Location location, float radius, Entity source) {
+        var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
+        Bukkit.getPluginManager().callEvent(event);
+        if (!event.isCancelled()) {
+            location.setY(location.getY() + 0.25);
+            location.getWorld().playSound(location, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1, 1.8f);
+            location.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, location, 10);
+            var nearby = source.getNearbyEntities(radius, radius, radius);
+            for (var entity : nearby) {
+                if (!(entity instanceof Player)) continue;
+                var player = (Player) entity;
+                if (player.isInvulnerable() || player.isDead()) continue;
+                var pLoc = player.getLocation();
+                var playerToNade = source.getLocation().clone().subtract(pLoc).toVector();
+                var nadeToPlayer = pLoc.clone().subtract(source.getLocation().clone()).toVector();
+                var normalizedPTN = playerToNade.clone().normalize();
+                var normalizedNTP = nadeToPlayer.clone().normalize();
+                var playerLooking = player.getLocation().getDirection();
+                var angle = Math.acos(normalizedPTN.dot(playerLooking));
+                angle = Math.toDegrees(angle);
+                if (angle < 110) {
+                    player.playSound(player.getLocation(), Sound.BLOCK_BELL_RESONATE, 0.8f, 2f);
+                    var loc = source.getLocation().clone();
+                    loc.add(normalizedNTP);
+                    var length = nadeToPlayer.length();
+                    var obstructed = false;
+                    for (int i = 1; i < length - 1; i++) {
+                        if (loc.getBlock().getType().isOccluding()) {
+                            obstructed = true;
+                            break;
+                        }
+                        loc.add(normalizedNTP);
+                    }
+                    if (obstructed) continue;
+                    var distMult = ((1 - length / radius) * 3 + 1) / 4;
+                    if (angle < 10) {
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, (int) (200 * distMult), 1, true, false));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) (200 * distMult), 1, true, false));
+                    } else if (angle < 45) {
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, (int) (140 * distMult), 1, true, false));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) (140 * distMult), 1, true, false));
+                    } else if (angle < 80) {
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, (int) (100 * distMult), 1, true, false));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) (100 * distMult), 1, true, false));
+                    } else if (angle < 95) {
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, (int) (40 * distMult), 1, true, false));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) (40 * distMult), 1, true, false));
+                    } else {
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, (int) (10 * distMult), 1, true, false));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) (10 * distMult), 1, true, false));
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     private boolean createSmokeExplosion(Location location, float radius, Entity source) {
         var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
         Bukkit.getPluginManager().callEvent(event);
@@ -201,17 +259,15 @@ public class EventListener implements Listener {
         var fireRadius = manager.getFireRadius(stack);
         var destructionRadius = manager.getDestructionRadius(stack);
         var smokeRadius = manager.getSmokeRadius(stack);
-        var primeEvent = new ExplosionPrimeEvent(item, Math.max(Math.max(Math.max(blastRadius, fireRadius), destructionRadius), smokeRadius), fireRadius > 0F);
+        var flashRadius = manager.getFlashRadius(stack);
+        var primeEvent = new ExplosionPrimeEvent(item, Math.max(Math.max(Math.max(Math.max(blastRadius, fireRadius), destructionRadius), smokeRadius), flashRadius), fireRadius > 0F);
         Bukkit.getPluginManager().callEvent(primeEvent);
         if (!primeEvent.isCancelled()) {
             blastRadius = Math.min(blastRadius, primeEvent.getRadius());
-            System.out.println("Blast:" + blastRadius);
             fireRadius = Math.min(fireRadius, primeEvent.getRadius());
-            System.out.println("Fire:" + fireRadius);
             destructionRadius = Math.min(destructionRadius, primeEvent.getRadius());
-            System.out.println("Destruction:" + destructionRadius);
             smokeRadius = Math.min(smokeRadius, primeEvent.getRadius());
-            System.out.println("Smoke:" + smokeRadius);
+            flashRadius = Math.min(flashRadius, primeEvent.getRadius());
             if (blastRadius > 0F)
                 item.getWorld().createExplosion(item.getLocation(), blastRadius / 2.0F, false, false, item);
             if (destructionRadius > 0F)
@@ -219,6 +275,7 @@ public class EventListener implements Listener {
             if (fireRadius > 0F && primeEvent.getFire())
                 createFireExplosion(item.getLocation(), fireRadius + 2.0F, item);
             if (smokeRadius > 0F) createSmokeExplosion(item.getLocation(), smokeRadius, item);
+            if (flashRadius > 0F) createFlashExplosion(item.getLocation(), flashRadius, item);
         }
         grenadeSet.remove(item);
         item.remove();
@@ -537,7 +594,7 @@ public class EventListener implements Listener {
 
         var velocity = player.getEyeLocation().getDirection();
         if (isOverhand) velocity.multiply(7.48331477 / Math.sqrt(manager.getWeight(grenade)));
-        else velocity.multiply(2.24499443 / Math.sqrt(manager.getWeight(grenade)));
+        else velocity.multiply(2.24499443 / Math.sqrt(Math.max(manager.getWeight(grenade), 0.1)));
         var loc = player.getEyeLocation();
         if (isOverhand)
             loc.setY(loc.getY() + 0.33);
