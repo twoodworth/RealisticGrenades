@@ -115,7 +115,7 @@ public class GrenadeGui {
                     for (var chr : string.toCharArray()) {
                         if (chr != ' ') {
                             var choice = choices.get(chr);
-                            var e = new StaticGuiElement(c, choice, click -> true, display);
+                            var e = new StaticGuiElement(c, choice, click -> true, choice.getItemMeta().getDisplayName());
                             recipeGui.addElement(e);
                         }
                         c++;
