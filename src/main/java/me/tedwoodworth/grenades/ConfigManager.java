@@ -18,6 +18,7 @@ public class ConfigManager {
     private final FileConfiguration config;
     public static int CALCULATIONS_PER_TICK;
     public static double SMOKE_THICKNESS;
+    public static String GUI_TITLE;
 
     public static final HashMap<String, Recipe> grenadeRecipes = new HashMap<>();
 
@@ -57,8 +58,28 @@ public class ConfigManager {
     }
 
     private void readConfig() {
-        CALCULATIONS_PER_TICK = config.getInt("calculations-per-tick");
-        SMOKE_THICKNESS = config.getDouble("smoke-thickness");
+        if (!config.contains("calculations-per-tick")) {
+            CALCULATIONS_PER_TICK = 20;
+            config.set("calculations-per-tick", 20);
+        } else {
+            CALCULATIONS_PER_TICK = config.getInt("calculations-per-tick");
+        }
+
+        if (!config.contains("smoke-thickness")) {
+            SMOKE_THICKNESS = 1.0;
+            config.set("smoke-thickness", 1.0);
+        } else {
+            SMOKE_THICKNESS = config.getDouble("smoke-thickness");
+        }
+
+        if (!config.contains("grenade-menu-title")) {
+            GUI_TITLE = "&8&lGrenades";
+            config.set("grenade-menu-title", GUI_TITLE);
+        } else {
+            GUI_TITLE = config.getString("grenade-menu-title");
+        }
+
+
         var keys = config.getConfigurationSection("grenades").getKeys(false);
         for (var grenadeID : keys) {
             var section = config.getConfigurationSection("grenades." + grenadeID);

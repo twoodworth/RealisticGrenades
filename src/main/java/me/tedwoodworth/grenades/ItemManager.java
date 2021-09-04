@@ -22,7 +22,7 @@ public class ItemManager {
     private ItemManager() {
     }
 
-    private String colorizeText(String text) {
+    public String colorizeText(String text) {
         text = text.replaceAll("&0", ChatColor.BLACK.toString());
         text = text.replaceAll("&1", ChatColor.DARK_BLUE.toString());
         text = text.replaceAll("&2", ChatColor.DARK_GREEN.toString());

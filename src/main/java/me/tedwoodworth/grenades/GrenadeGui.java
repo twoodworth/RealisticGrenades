@@ -23,7 +23,8 @@ public class GrenadeGui {
     }
 
     private static void createGui() {
-        var title = "" + ChatColor.DARK_GREEN + ChatColor.BOLD + "Grenades";
+        var title = ConfigManager.GUI_TITLE;
+        title = "" + ChatColor.RESET + ChatColor.WHITE + ItemManager.getInstance().colorizeText(title);
 
         // Create setup
         var guiSetup = new String[]{
