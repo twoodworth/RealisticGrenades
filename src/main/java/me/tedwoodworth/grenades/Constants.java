@@ -2,6 +2,9 @@ package me.tedwoodworth.grenades;
 
 import org.bukkit.NamespacedKey;
 
+/**
+ * A set of constants which the plugin utilizes.
+ */
 public class Constants {
     public static final NamespacedKey BOUNCINESS_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "bounciness");
     public static final NamespacedKey AIR_RESISTANCE_KEY = new NamespacedKey(RealisticGrenades.getInstance(), "air_resistance");

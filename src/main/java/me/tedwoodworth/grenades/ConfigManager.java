@@ -11,17 +11,54 @@ import org.bukkit.inventory.ShapelessRecipe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+/**
+ * Writes, reads and interprets the information contained in the Config file.
+ */
 public class ConfigManager {
+
+    /**
+     * The instance of ConfigManager, used for employing the Singleton design pattern.
+     */
     private static ConfigManager instance = null;
+
+    /**
+     * A reference to the RealisticPlugin instance
+     */
     private final RealisticGrenades plugin;
+
+    /**
+     * The FileConfiguration object which contains all of the configuration data.
+     */
     private final FileConfiguration config;
+
+    /**
+     * A configurable value which represents the number of calculations to run each tick.
+     */
     public static int CALCULATIONS_PER_TICK;
+
+    /**
+     * A configurable value which reduces/amplifies the number of particles a smoke explosion spawns.
+     */
     public static double SMOKE_THICKNESS;
+
+    /**
+     * A configurable value which determines the title of the 'Grenades' GUI.
+     */
     public static String GUI_TITLE;
 
+    /**
+     * A configurable map of grenade IDs to recipes which is used to determine
+     * the crafting recipes of all the Grenades.
+     */
     public static final HashMap<String, Recipe> grenadeRecipes = new HashMap<>();
 
+    /**
+     * Returns the singleton instance of ConfigManager, or constructs one if not yet constructed.
+     *
+     * @return ConfigManager instance
+     */
     public static ConfigManager getInstance() {
         if (instance == null) {
             instance = new ConfigManager();
@@ -29,12 +66,19 @@ public class ConfigManager {
         return instance;
     }
 
+    /**
+     * Private constructor of ConfigManager.
+     */
     private ConfigManager() {
         plugin = RealisticGrenades.getInstance();
         plugin.saveDefaultConfig();
         config = plugin.getConfig();
     }
 
+    /**
+     * Loads the config file. This method will create the config file if it does not exist, and
+     * will update the config header every time it is ran.
+     */
     public void loadConfig() {
         config.options().copyDefaults(true).header(
                 "\u0023###########################################################\n" +
@@ -57,6 +101,16 @@ public class ConfigManager {
         readConfig();
     }
 
+    /**
+     * Reads through each section of the config file.
+     * <p>
+     * If any of the expected sections cannot be found, they will be automatically
+     * inserted and set to default values.
+     * <p>
+     * For each grenade configuration, this method will construct and store a new grenade using
+     * {@link ItemManager#createGrenade(String, String, String, double, double, double, int, int, double, float, float, float,
+     * float, float, double, boolean, boolean, boolean, boolean, List)}
+     */
     private void readConfig() {
         if (!config.contains("calculations-per-tick")) {
             CALCULATIONS_PER_TICK = 20;

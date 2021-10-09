@@ -12,10 +12,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * The JavaPlugin class for RealisticGrenades
+ */
 public class RealisticGrenades extends JavaPlugin {
     private static RealisticGrenades instance;
     public static UpdateChecker checker;
 
+    /**
+     * Provides the code to be run when the plugin is enabled
+     * <p>
+     * Checks for updates, loads the config, generates the gui, registers the commands, and
+     * registers bStats data.
+     */
     @Override
     public void onEnable() {
         instance = this;
@@ -43,14 +52,26 @@ public class RealisticGrenades extends JavaPlugin {
         metrics.addCustomChart(new Metrics.SimplePie("chart_id", () -> "RealisticGrenades"));
     }
 
+    /**
+     * Provides code to run when the plugin is disabled
+     */
     @Override
     public void onDisable() {
     }
 
+    /**
+     * Returns an instance of {@link this}
+     *
+     * @return RealisticGrenades instance
+     */
     public static RealisticGrenades getInstance() {
         return instance;
     }
 
+    /**
+     * Checks if the current version is outdated, up-to-date, or unreleased, and
+     * prints out a message accordingly.
+     */
     private void updateCheck() {
         var result = checker.getUpdateCheckResult();
         switch (result) {
@@ -63,6 +84,14 @@ public class RealisticGrenades extends JavaPlugin {
         }
     }
 
+    /**
+     * Sends a message to a player based on if the plugin is outdated,
+     * up-to-date, or unreleased.
+     * <p>
+     * Message will not send if the player does not have sufficient permission to receive it.
+     *
+     * @param player: Player to send message to
+     */
     public void updateCheck(Player player) {
         if (player.isOp() || player.hasPermission("realisticgrenades.admin.*")) {
             var result = checker.getUpdateCheckResult();
@@ -79,6 +108,4 @@ public class RealisticGrenades extends JavaPlugin {
             }
         }
     }
-
-
 }

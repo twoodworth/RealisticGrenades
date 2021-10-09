@@ -14,7 +14,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Defines, regulates and executes a set of commands which allow users to interact with the plugin.
+ */
 public class Commands implements CommandExecutor, TabCompleter {
+
+    /**
+     * Called when a command is executed, and runs a method if the command name and/or arguments
+     * match certain criteria.
+     *
+     * @param sender  The entity which has sent the command
+     * @param command The command which has been sent
+     * @param label   The label of the command
+     * @param args    The arguments of the command
+     * @return Whether or not the command has been successfully interpreted.
+     */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (command.getName().equalsIgnoreCase("grenades")) {
@@ -28,13 +42,23 @@ public class Commands implements CommandExecutor, TabCompleter {
                 } else if (args.length == 4) {
                     give(sender, args[1], args[2], args[3]);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Incorrect usage, try: /realisticGrenades give <player> <grenade id> <amount>");
+                    sender.sendMessage(ChatColor.RED + "Incorrect usage, try /realisticGrenades give <player> <grenade id> <amount>");
                 }
             }
         }
         return true;
     }
 
+    /**
+     * Provides a list of String values which represent all of the valid arguments
+     * for the given command.
+     *
+     * @param sender  The entity which is entering the command.
+     * @param command The command which is being entered.
+     * @param alias   The alias of the command
+     * @param args    The command arguments which have been entered
+     * @return A list of possible arguments
+     */
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         if (command.getName().equalsIgnoreCase("realisticgrenades")) {
@@ -57,6 +81,11 @@ public class Commands implements CommandExecutor, TabCompleter {
         return null;
     }
 
+    /**
+     * Registers the command onto this plugin's list of valid commands.
+     *
+     * @param pluginCommand The object which represents this class's set of commands.
+     */
     public static void register(PluginCommand pluginCommand) {
         var commands = new Commands();
 
@@ -64,6 +93,11 @@ public class Commands implements CommandExecutor, TabCompleter {
         pluginCommand.setTabCompleter(commands);
     }
 
+    /**
+     * Displays a GUI containing information about all available grenades.
+     *
+     * @param sender The entity which has sent this command.
+     */
     private void grenades(CommandSender sender) {
         if (!(sender instanceof Player)) {
             sender.sendMessage("Must be a player to use this command.");
@@ -75,6 +109,11 @@ public class Commands implements CommandExecutor, TabCompleter {
         }
     }
 
+    /**
+     * Provides a list of admin commands.
+     *
+     * @param sender The entity which has sent this command.
+     */
     private void realisticGrenades(CommandSender sender) {
         var lines = new ArrayList<String>();
         if (sender.hasPermission("realisticgrenades.admin.give")) {
@@ -90,6 +129,14 @@ public class Commands implements CommandExecutor, TabCompleter {
         }
     }
 
+    /**
+     * Gives a specified player grenade(s) corresponding to the given ID.
+     *
+     * @param sender    The entity which has sent this command.
+     * @param strPlayer The player to give the grenade(s) to
+     * @param id:       The ID of the grenade(s) to give
+     * @param strAmt:   The number of grenade(s) to give.
+     */
     private void give(CommandSender sender, String strPlayer, String id, String strAmt) {
         if (!sender.hasPermission("realisticgrenades.admin.give")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");

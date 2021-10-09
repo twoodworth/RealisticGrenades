@@ -8,10 +8,25 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
 
+/**
+ * Constructs and manages grenades and the values of their attributes.
+ */
 public class ItemManager {
+    /**
+     * Singleton instance of ItemManager
+     */
     public static ItemManager instance = null;
+
+    /**
+     * Map of grenade ID to grenade ItemStack
+     */
     private final Map<String, ItemStack> grenades = new HashMap<>();
 
+    /**
+     * Returns the singleton instance of ItemManager.
+     *
+     * @return ItemManager instance
+     */
     public static ItemManager getInstance() {
         if (instance == null) {
             instance = new ItemManager();
@@ -19,9 +34,18 @@ public class ItemManager {
         return instance;
     }
 
+    /**
+     * Constructs ItemManager
+     */
     private ItemManager() {
     }
 
+    /**
+     * Translates string color codes into their corresponding {@link ChatColor} values
+     *
+     * @param text: Text to colorize
+     * @return Colorized text
+     */
     public String colorizeText(String text) {
         text = text.replaceAll("&0", ChatColor.BLACK.toString());
         text = text.replaceAll("&1", ChatColor.DARK_BLUE.toString());
@@ -48,6 +72,31 @@ public class ItemManager {
         return text;
     }
 
+    /**
+     * Creates a grenade with the given attributes
+     *
+     * @param texture:           The texture code of the grenade
+     * @param grenadeID:         The ID of the grenade
+     * @param name:              The name of the grenade
+     * @param bounciness:        How bouncy the grenade is
+     * @param airResistance:     How much air resistance impacts the grenade
+     * @param waterResistance:   How much water resistance impacts the grenade
+     * @param fuseTime:          How long it takes the grenade to explode
+     * @param despawnTime:       How long it takes the grenade to despawn
+     * @param directHitDamage:   How much damage a direct hit from the grenade deals
+     * @param blastRadius:       The size of the grenade's blast explosion
+     * @param smokeRadius:       The size of the grenade's smoke explosion
+     * @param fireRadius:        The size of the grenade's fire explosion
+     * @param destructionRadius: The size of the grenade's destruction explosion
+     * @param flashRadius:       The size of the grenade's flash explosion
+     * @param weight:            The grenade's weight
+     * @param hasGravity:        Whether or not the grenade has gravity
+     * @param hasSmokeTrail:     Whether or not the grenade has a smoke trail
+     * @param explodeOnContact:  Whether or not the grenade explodes on contact
+     * @param beeps:             Whether or not the grenade beeps
+     * @param lore:              The grenade's lore
+     * @return A grenade ItemStack
+     */
     public ItemStack createGrenade(String texture, String grenadeID, String name, double bounciness, double airResistance, double waterResistance, int fuseTime, int despawnTime, double directHitDamage, float blastRadius, float smokeRadius, float fireRadius, float destructionRadius, float flashRadius, double weight, boolean hasGravity, boolean hasSmokeTrail, boolean explodeOnContact, boolean beeps, List<String> lore) {
         var grenade = new ItemStack(Material.PLAYER_HEAD); // create item
 
@@ -97,16 +146,33 @@ public class ItemManager {
         return grenade.clone();
     }
 
+    /**
+     * Returns a grenade ItemStack corresponding to the given ID
+     *
+     * @param id: ID of grenade
+     * @return Grenade
+     */
     public ItemStack getGrenade(String id) {
         var grenade = grenades.get(id);
         if (grenade == null) return null;
         return grenade.clone();
     }
 
+    /**
+     * Returns a list of all grenade IDs
+     *
+     * @return List of grenade IDs
+     */
     public List<String> getGrenadeIDs() {
         return new ArrayList<>(grenades.keySet());
     }
 
+    /**
+     * Returns the fuse time of a given grenade
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return The grenade's fuse time
+     */
     public int getFuseTime(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return -1;
@@ -115,6 +181,12 @@ public class ItemManager {
         return container.get(Constants.FUSE_TIME_KEY, PersistentDataType.INTEGER);
     }
 
+    /**
+     * Determines whether the given grenade beeps
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return whether the given grenade beeps
+     */
     public boolean beeps(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return false;
@@ -123,6 +195,12 @@ public class ItemManager {
         return container.get(Constants.BEEPS_KEY, BooleanPersistentDataType.instance);
     }
 
+    /**
+     * Determines the remaining time until a given grenade explodes
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return remaining time until explosion
+     */
     public long getRemainingTime(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return -1;
@@ -131,6 +209,13 @@ public class ItemManager {
         return container.get(Constants.REMAINING_KEY, PersistentDataType.LONG);
     }
 
+
+    /**
+     * Determines the explosion time at the moment a grenade was thrown
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return The initial explosion time
+     */
     public long getInitialTime(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return -1;
@@ -139,6 +224,13 @@ public class ItemManager {
         return container.get(Constants.INITIAL_KEY, PersistentDataType.LONG);
     }
 
+
+    /**
+     * Determines the weight of a grenade
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return The weight of the given grenade
+     */
     public double getWeight(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 10.0;
@@ -147,6 +239,13 @@ public class ItemManager {
         return container.get(Constants.WEIGHT_KEY, PersistentDataType.DOUBLE);
     }
 
+
+    /**
+     * Determines the air resistance of a given grenade
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return Grenade air resistance
+     */
     public double getAirResistance(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0;
@@ -155,6 +254,13 @@ public class ItemManager {
         return 1 - Math.pow(1 - container.get(Constants.AIR_RESISTANCE_KEY, PersistentDataType.DOUBLE), 1 / (20.0 * ConfigManager.CALCULATIONS_PER_TICK));
     }
 
+
+    /**
+     * Determines the given grenade's water resistance
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade water resistance
+     */
     public double getWaterResistance(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0;
@@ -163,6 +269,13 @@ public class ItemManager {
         return 1 - Math.pow(1 - container.get(Constants.WATER_RESISTANCE_KEY, PersistentDataType.DOUBLE), 1 / (20.0 * ConfigManager.CALCULATIONS_PER_TICK));
     }
 
+
+    /**
+     * Determines whether the given grenade has gravity
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return whether the grenade has gravity
+     */
     public boolean getHasGravity(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return true;
@@ -171,6 +284,12 @@ public class ItemManager {
         return container.get(Constants.GRAVITY_KEY, BooleanPersistentDataType.instance);
     }
 
+    /**
+     * Determines the given grenade's blast radius
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade blast radius
+     */
     public float getBlastRadius(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0F;
@@ -179,6 +298,12 @@ public class ItemManager {
         return container.get(Constants.BLAST_RADIUS_KEY, PersistentDataType.FLOAT);
     }
 
+    /**
+     * Determines the given grenade's fire radius
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade fire radius
+     */
     public float getFireRadius(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0F;
@@ -187,6 +312,12 @@ public class ItemManager {
         return container.get(Constants.FIRE_RADIUS_KEY, PersistentDataType.FLOAT);
     }
 
+    /**
+     * Determines the given grenade's destruction radius
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade destruction radius
+     */
     public float getDestructionRadius(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0F;
@@ -195,6 +326,12 @@ public class ItemManager {
         return container.get(Constants.DESTRUCTION_RADIUS_KEY, PersistentDataType.FLOAT);
     }
 
+    /**
+     * Determines the given grenade's bounciness
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade bounciness
+     */
     public double getBounciness(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0;
@@ -203,6 +340,12 @@ public class ItemManager {
         return container.get(Constants.BOUNCINESS_KEY, PersistentDataType.DOUBLE);
     }
 
+    /**
+     * Determines the given grenade's direct hit damage
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade direct hit damage
+     */
     public double getDirectHitDamage(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0;
@@ -211,6 +354,12 @@ public class ItemManager {
         return container.get(Constants.DIRECT_HIT_DAMAGE_KEY, PersistentDataType.DOUBLE);
     }
 
+    /**
+     * Determines the given grenade's smoke explosion radius
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade smoke explosion radius
+     */
     public float getSmokeRadius(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0F;
@@ -219,6 +368,12 @@ public class ItemManager {
         return container.get(Constants.SMOKE_RADIUS_KEY, PersistentDataType.FLOAT);
     }
 
+    /**
+     * Determines the given grenade's flash explosion radius
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade flash explosion radius
+     */
     public float getFlashRadius(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0.0F;
@@ -227,6 +382,12 @@ public class ItemManager {
         return container.get(Constants.FLASH_RADIUS_KEY, PersistentDataType.FLOAT);
     }
 
+    /**
+     * Determines if the given grenade has a smoke trail
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return whether the grenade has a smoke trail or not
+     */
     public boolean hasSmokeTrail(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return false;
@@ -235,6 +396,12 @@ public class ItemManager {
         return container.get(Constants.SMOKE_TRAIL_KEY, BooleanPersistentDataType.instance);
     }
 
+    /**
+     * Sets the given grenade's remaining time
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade remaining time
+     */
     public void setRemainingTime(ItemStack item, long time) {
         var meta = item.getItemMeta();
         if (meta == null) return;
@@ -243,6 +410,12 @@ public class ItemManager {
         item.setItemMeta(meta);
     }
 
+    /**
+     * Sets the given grenade's remaining despawn time
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade remaining despawn time
+     */
     public void setRemainingDespawnTime(ItemStack item, long time) {
         var meta = item.getItemMeta();
         if (meta == null) return;
@@ -251,6 +424,12 @@ public class ItemManager {
         item.setItemMeta(meta);
     }
 
+    /**
+     * Determines the given grenade's remaining despawn time
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade remaining despawn time
+     */
     public long getRemainingDespawnTime(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0;
@@ -259,6 +438,12 @@ public class ItemManager {
         return container.get(Constants.DESPAWN_REMAINING_KEY, PersistentDataType.LONG);
     }
 
+    /**
+     * Gets the given grenade's initial despawn time
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade despawn time
+     */
     public int getDespawnTime(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return 0;
@@ -267,6 +452,12 @@ public class ItemManager {
         return container.get(Constants.DESPAWN_TIME_KEY, PersistentDataType.INTEGER);
     }
 
+    /**
+     * Determines if the given grenade explodes on collision
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade explodes on collision
+     */
     public boolean getExplodeOnCollision(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return false;
@@ -275,6 +466,12 @@ public class ItemManager {
         return container.get(Constants.EXPLODE_ON_CONTACT_KEY, BooleanPersistentDataType.instance);
     }
 
+    /**
+     * Determines if the given item is a grenade
+     *
+     * @param item: An ItemStack
+     * @return item is a grenade
+     */
     public boolean isGrenade(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return false;
@@ -282,6 +479,12 @@ public class ItemManager {
         return container.has(Constants.GRENADE_ID_KEY, PersistentDataType.STRING);
     }
 
+    /**
+     * Gets the given grenade's ID
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade ID
+     */
     public String getID(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return null;
@@ -289,6 +492,12 @@ public class ItemManager {
         return container.get(Constants.GRENADE_ID_KEY, PersistentDataType.STRING);
     }
 
+    /**
+     * Determines if the given grenade is primed
+     *
+     * @param item: The ItemStack of the given Grenade
+     * @return grenade is primed
+     */
     public boolean isPrimed(ItemStack item) {
         var meta = item.getItemMeta();
         if (meta == null) return false;
@@ -296,6 +505,12 @@ public class ItemManager {
         return container.has(Constants.PRIMED_KEY, BooleanPersistentDataType.instance) && container.get(Constants.PRIMED_KEY, BooleanPersistentDataType.instance);
     }
 
+    /**
+     * Primes the given grenade.
+     *
+     * @param grenade: The grenade to prime
+     * @throws IllegalArgumentException if the ItemStack is not a grenade ItemStack.
+     */
     public void primeGrenade(ItemStack grenade) {
         if (!isGrenade(grenade)) {
             throw new IllegalArgumentException("Error: argument is not a grenade.");

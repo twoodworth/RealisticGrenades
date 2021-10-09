@@ -27,15 +27,53 @@ import org.bukkit.util.BoundingBox;
 
 import java.util.*;
 
+/**
+ * Executes code whenever certain events related to the RealisticGrenades plugin are called.
+ */
 public class EventListener implements Listener {
+    /**
+     * A list of players who have dropped grenades on the ground. Used to signify that these players are simply
+     * dropping grenades, not priming them for explosion.
+     */
     private final Set<Player> grenadeDropList = new HashSet<>();
+
+    /**
+     * A set of all primed grenades.
+     */
     public Set<Item> grenadeSet = new HashSet<>();
+
+    /**
+     * A set of all players that have thrown a grenades that have not yet exploded or despawned.
+     */
     public Set<Player> throwerSet = new HashSet<>();
+
+    /**
+     * The singleton instance of ItemManager
+     */
     private final ItemManager manager = ItemManager.getInstance();
+
+    /**
+     * The singleton instance of RealisticGrenades
+     */
     private final RealisticGrenades plugin = RealisticGrenades.getInstance();
+
+    /**
+     * An air item, used for removing items (replacing them with air).
+     */
     private final ItemStack air = new ItemStack(Material.AIR);
+
+    /**
+     * A map of Grenades, and all the entities that the grenade has collided with.
+     */
     private static final HashMap<Item, HashSet<Entity>> hitList = new HashMap<>();
 
+    /**
+     * Returns the player which has thrown the given grenade. This value is fetched from the grenade's
+     * PersistentDataContainer.
+     *
+     * @param item: The grenade which has been thrown
+     * @return The grenade thrower
+     */
     public Player getGrenadeThrower(Item item) {
         var stack = item.getItemStack();
         var meta = stack.getItemMeta();
@@ -45,6 +83,12 @@ public class EventListener implements Listener {
         return Bukkit.getPlayer(uuid);
     }
 
+    /**
+     * Sets the thrower of a given grenade. This value is stored within the grenade's PersistentDataContainer
+     *
+     * @param item:   The grenade being thrown
+     * @param player: The player throwing the grenade.
+     */
     public void setGrenadeThrower(Item item, Player player) {
         var stack = item.getItemStack();
         var meta = stack.getItemMeta();
@@ -54,6 +98,19 @@ public class EventListener implements Listener {
         item.setItemStack(stack);
     }
 
+    /**
+     * Creates a fire explosion.
+     * <p>
+     * This fire explosion begins at the given location and spreads outwards until
+     * it reaches the given radius.
+     * <p>
+     * As the explosion spreads, it burns nearby blocks.
+     *
+     * @param location: Location of the explosion
+     * @param radius:   Radius of the explosion
+     * @param source:   Source of the explosion
+     * @return Whether the explosion took place or not
+     */
     private boolean createFireExplosion(Location location, float radius, Entity source) {
         var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
         Bukkit.getPluginManager().callEvent(event);
@@ -122,6 +179,17 @@ public class EventListener implements Listener {
         return false;
     }
 
+    /**
+     * Creates a flash explosion.
+     * <p>
+     * A flash explosion takes place at a certain location, and blinds any players facing the
+     * explosion within the provided radius.
+     *
+     * @param location: Location of the explosion
+     * @param radius:   Radius of the explosion
+     * @param source:   Source of the explosion
+     * @return Whether the explosion took place or not.
+     */
     private boolean createFlashExplosion(Location location, float radius, Entity source) {
         var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
         Bukkit.getPluginManager().callEvent(event);
@@ -180,6 +248,18 @@ public class EventListener implements Listener {
         return false;
     }
 
+
+    /**
+     * Creates a smoke explosion.
+     * <p>
+     * A smoke explosion takes lasts 420 ticks. The explosion begins at the location, and expands by 5% of the ending radius
+     * every 5 ticks until it reaches its full size. The explosion will spawn smoke particles which block visibility.
+     *
+     * @param location: Location of the explosion
+     * @param radius:   Radius of the explosion
+     * @param source:   Source of the explosion
+     * @return Whether the explosion took place or not.
+     */
     private boolean createSmokeExplosion(Location location, float radius, Entity source) {
         var event = new EntityExplodeEvent(source, location, new ArrayList<>(), radius);
         Bukkit.getPluginManager().callEvent(event);
@@ -211,6 +291,15 @@ public class EventListener implements Listener {
         return false;
     }
 
+    /**
+     * Spawns smoke particles over a period of (max - i) seconds at random locations surrounding
+     * the source location within a certain radius.
+     *
+     * @param source: The source of the smoke.
+     * @param radius: The radius to spawn smoke inside
+     * @param i:      Initial value of i
+     * @param max:    The max value of i
+     */
     private void createSmoke(Entity source, float radius, int i, final int max) {
         var count = ConfigManager.SMOKE_THICKNESS * 0.8 * Math.pow(radius, 3);
 
@@ -253,6 +342,14 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Causes a grenade to explode.
+     * <p>
+     * Fetches the grenade's attributes in order to determine
+     * what kind of explosions should take place and at what size.
+     *
+     * @param item: The grenade to explode
+     */
     private void explodeGrenade(Item item) {
         var stack = item.getItemStack();
         var blastRadius = manager.getBlastRadius(stack);
@@ -281,6 +378,16 @@ public class EventListener implements Listener {
         item.remove();
     }
 
+    /**
+     * Causes a grenade to tick once. This method calls itself via {@link org.bukkit.scheduler.BukkitScheduler}
+     * so that it runs once for each active grenade each tick.
+     * <p>
+     * During a grenade tick, a grenade determines if it is going to collide, and how it will travel before the next tick.
+     * <p>
+     * Additionally, it determines if it will be exploding or despawning.
+     *
+     * @param item: The grenade that is ticking.
+     */
     private void grenadeTick(Item item) {
         if (!grenadeSet.contains(item)) return;
         var stack = item.getItemStack();
@@ -573,6 +680,13 @@ public class EventListener implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeTick(item), 1L);
     }
 
+    /**
+     * Called when a player uses a grenade item so that the grenade can be spawned as an entity and thrown.
+     *
+     * @param player:     The grenade thrower
+     * @param grenade:    The grenade to be spawn and be thrown
+     * @param isOverhand: If the grenade is being thrown overhand.
+     */
     private void throwGrenade(Player player, ItemStack grenade, boolean isOverhand) {
         var remainingTime = manager.getRemainingTime(grenade);
         if (player.isOnline() && !player.isDead() && player.isSneaking() && remainingTime != 0) { // if sneaking, don't throw yet
@@ -631,11 +745,28 @@ public class EventListener implements Listener {
         grenadeTick(drop);
     }
 
+    /**
+     * Called when a player drops a grenade.
+     * <p>
+     * In order to tell the server that the grenade should not be primed, the player is added to
+     * the {@link this#grenadeDropList} which prevents the player from throwing any grenades until
+     * 2 ticks later.
+     *
+     * @param player: Player to prevent from priming a grenade.
+     */
     private void cancelPrime(Player player) {
         grenadeDropList.add(player);
         Bukkit.getScheduler().runTaskLater(plugin, () -> grenadeDropList.remove(player), 2L);
     }
 
+    /**
+     * Called when a player uses a grenade.
+     *
+     * @param item:   The grenade being used.
+     * @param action: The type of action used on the grenade
+     * @param player: The player that is using the grenade
+     * @param hand:   The hand which the grenade was thrown with.
+     */
     private void grenadeUse(ItemStack item, Action action, Player player, EquipmentSlot hand) {
         boolean isOverhand = (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK);
 
@@ -657,6 +788,15 @@ public class EventListener implements Listener {
         throwGrenade(player, grenade, isOverhand);
     }
 
+    /**
+     * Executed whenever an {@link EntityExplodeEvent} is called.
+     * <p>
+     * When this event gets called, this method will determine if the entity exploding is a grenade.
+     * <p>
+     * If so, then it will manually break each block in the block list.
+     *
+     * @param event
+     */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onEntityExplode(EntityExplodeEvent event) {
         var entity = event.getEntity();
@@ -671,6 +811,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever a {@link PlayerDropItemEvent} is called.
+     * <p>
+     * Will prevent a grenade from being primed.
+     *
+     * @param event
+     */
     @EventHandler
     private void onPlayerItemDrop(PlayerDropItemEvent event) {
         var drop = event.getItemDrop();
@@ -680,6 +827,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever a {@link ChunkLoadEvent} is called.
+     * <p>
+     * When a chunk is loaded, if it contains any inactive grenades, the grenades will be re-activated, and ticking will resume.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onChunkLoad(ChunkLoadEvent event) {
         var entities = event.getChunk().getEntities();
@@ -694,6 +848,14 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever a {@link ChunkUnloadEvent} is called.
+     * <p>
+     * When a chunk is unloaded, if it contains any active grenades, the grenades will be made
+     * inactive, and the grenade's ticking will be paused until reactivated.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onChunkUnload(ChunkUnloadEvent event) {
         var entities = event.getChunk().getEntities();
@@ -704,6 +866,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever an {@link InventoryClickEvent} is called.
+     * <p>
+     * Prevents a grenade from being unintentionally primed by checking if it is dropped via the player's inventory.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onInventoryClick(InventoryClickEvent event) {
         var item = event.getCurrentItem();
@@ -717,6 +886,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever a {@link PlayerInteractEvent} is called.
+     * <p>
+     * Allows players to throw grenades when they interact with a grenade in their hand.
+     *
+     * @param event The event called.
+     */
     @EventHandler
     private void onItemUse(PlayerInteractEvent event) {
         var item = event.getItem();
@@ -731,6 +907,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever an {@link InventoryPickupItemEvent} is called.
+     * <p>
+     * Prevents players from picking up primed grenades.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onInventoryPickupItem(InventoryPickupItemEvent event) {
         var item = event.getItem();
@@ -739,6 +922,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever an {@link ItemMergeEvent} is called.
+     * <p>
+     * Prevents two primed grenades from merging.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onItemMerge(ItemMergeEvent event) {
         var item = event.getEntity();
@@ -747,6 +937,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever an {@link EntityPickupItemEvent} is called.
+     * <p>
+     * Prevents entities from picking up primed grenades.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onEntityPickupItem(EntityPickupItemEvent event) {
         var drop = event.getItem();
@@ -756,6 +953,14 @@ public class EventListener implements Listener {
         }
     }
 
+
+    /**
+     * Executed whenever an {@link EntityCombustEvent} is called.
+     * <p>
+     * Prevents primed grenade from combusting.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onEntityCombust(EntityCombustEvent event) {
         var entity = event.getEntity();
@@ -767,6 +972,14 @@ public class EventListener implements Listener {
         }
     }
 
+
+    /**
+     * Executed whenever a {@link PlayerJoinEvent} is called.
+     * <p>
+     * Notifies server operators if a new update is available.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onPlayerJoin(PlayerJoinEvent event) {
         var player = event.getPlayer();
@@ -786,6 +999,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever an {@link InventoryPickupItemEvent} is called.
+     * <p>
+     * Updates grenades if they do not match the config file's current settings.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onPickupItem(InventoryPickupItemEvent event) {
         var item = event.getItem();
@@ -800,6 +1020,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever an {@link EntityPickupItemEvent} is called.
+     * <p>
+     * Updates grenades if they do not match the config file's current settings.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onPickupItem(EntityPickupItemEvent event) {
         var item = event.getItem();
@@ -814,6 +1041,14 @@ public class EventListener implements Listener {
         }
     }
 
+
+    /**
+     * Executed whenever an {@link EntityDropItemEvent} is called.
+     * <p>
+     * Updates grenades if they do not match the config file's current settings.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onEntityDropItem(EntityDropItemEvent event) {
         var item = event.getItemDrop();
@@ -828,6 +1063,13 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Executed whenever an {@link InventoryOpenEvent} is called.
+     * <p>
+     * Updates grenades if they do not match the config file's current settings.
+     *
+     * @param event: The event called.
+     */
     @EventHandler
     private void onInventoryOpen(InventoryOpenEvent event) {
         var inv = event.getInventory();
@@ -845,6 +1087,16 @@ public class EventListener implements Listener {
         }
     }
 
+    /**
+     * Plays a sound effect.
+     *
+     * @param world:    The world to play the sound effect in
+     * @param location: The source location of the sound effect
+     * @param sound:    The type of sound effect to play
+     * @param volume:   The volume to play the sound effect
+     * @param radius:   The distance that the sound can be heard from
+     * @param pitch:    The pitch of the sound
+     */
     private void playSound(World world, Location location, Sound sound, float volume, float radius, float pitch) {
         var nearby = world.getNearbyEntities(location, radius, radius, radius);
         for (var e : nearby) {

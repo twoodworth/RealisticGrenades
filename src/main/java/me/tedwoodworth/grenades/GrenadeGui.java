@@ -11,10 +11,25 @@ import org.bukkit.inventory.ShapelessRecipe;
 
 import java.util.*;
 
+/**
+ * Creates and designs the Grenade GUI.
+ */
 public class GrenadeGui {
+    /**
+     * The single instance of InventoryGui
+     */
     private static InventoryGui gui = null;
+
+    /**
+     * The map of grenade IDs to grenade recipe GUI pages
+     */
     private static final HashMap<String, InventoryGui> recipes = new HashMap<>();
 
+    /**
+     * Returns {@link this#gui} or constructs it if null.
+     *
+     * @return InventoryGui instance
+     */
     public static InventoryGui getGrenadeGui() {
         if (gui == null) {
             createGui();
@@ -22,6 +37,15 @@ public class GrenadeGui {
         return gui;
     }
 
+    /**
+     * Generates the grenade GUI.
+     * <p>
+     * This method will first create the main GUI menu.
+     * <p>
+     * Next, for each configured grenade, it will create a new page which
+     * displays how to craft it, and it will add a button element to the main menu
+     * which pulls up the recipe page.
+     */
     private static void createGui() {
         var title = ConfigManager.GUI_TITLE;
         title = "" + ChatColor.RESET + ChatColor.WHITE + ItemManager.getInstance().colorizeText(title);
